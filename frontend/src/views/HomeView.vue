@@ -1,0 +1,35 @@
+<template>
+    <main class="home-shell">
+        <section class="home-card">
+            <nav class="site-nav" aria-label="Main navigation">
+                <RouterLink class="brand" to="/" aria-label="E-Catalog home">
+                    <span class="brand-mark" aria-hidden="true"></span>
+                    <span>E-Catalog</span>
+                </RouterLink>
+
+                <div class="nav-links">
+                    <RouterLink class="nav-link active" to="/">Home</RouterLink>
+                    <a class="nav-link" href="#catalog">Catalog</a>
+                    <a class="nav-link" href="#about">About</a>
+                </div>
+
+                <div class="nav-actions">
+                    <RouterLink class="nav-action secondary" to="/login">Sign In</RouterLink>
+                    <RouterLink class="nav-action primary" to="/register">Sign Up</RouterLink>
+                </div>
+            </nav>
+
+            <section id="catalog" class="hero-section" aria-labelledby="home-title">
+                <p class="hero-eyebrow">Your product space</p>
+                <h1 id="home-title">Everything you need,<br />in one catalog.</h1>
+                <p class="hero-description">Explore products, compare options, and find what fits your world.</p>
+                <div class="hero-actions">
+                    <RouterLink class="hero-button primary" to="/register">Get Started</RouterLink>
+                    <a class="hero-button secondary" href="#about">Learn More</a>
+                </div>
+            </section>
+
+            <section id="about" class="hero-next-section" aria-label="About E-Catalog"></section>
+        </section>
+    </main>
+</template>
