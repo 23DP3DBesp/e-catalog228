@@ -9,8 +9,8 @@
 
                 <div class="nav-links">
                     <RouterLink class="nav-link active" to="/">Home</RouterLink>
-                    <a class="nav-link" href="#catalog">Catalog</a>
-                    <a class="nav-link" href="#about">About</a>
+                    <RouterLink class="nav-link" to="/catalog">Catalog</RouterLink>
+                    <RouterLink class="nav-link" to="/about">About</RouterLink>
                 </div>
 
                 <div class="nav-actions">
@@ -25,7 +25,7 @@
                 <p class="hero-description">Explore products, compare options, and find what fits your world.</p>
                 <div class="hero-actions">
                     <RouterLink class="hero-button primary" to="/register">Get Started</RouterLink>
-                    <a class="hero-button secondary" href="#about">Learn More</a>
+                    <RouterLink class="hero-button secondary" to="/about">Learn More</RouterLink>
                 </div>
             </section>
 
