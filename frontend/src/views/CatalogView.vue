@@ -17,7 +17,7 @@
                     <RouterLink class="cart-link" to="/cart" aria-label="Open shopping cart">
                         Cart <span>{{ cartCount }}</span>
                     </RouterLink>
-                    <RouterLink class="catalog-sign-in" to="/login">Sign In</RouterLink>
+                    <AuthNav />
                 </div>
             </nav>
 
@@ -60,7 +60,7 @@
                 </div>
 
                 <div v-if="filteredProducts.length" class="product-grid">
-                    <article v-for="product in filteredProducts" :key="product.id" class="product-card">
+                    <article v-for="product in filteredProducts" :key="product.id" class="product-card" tabindex="0" @click="openProductDetails(product.id)" @keydown.enter="openProductDetails(product.id)"  >
                         <div class="product-visual" :class="`season-${product.season}`">
                             <span class="tire-shape" aria-hidden="true"></span>
                             <span class="product-season">{{ product.seasonLabel }}</span>
@@ -76,7 +76,7 @@
                             <p class="product-spec">{{ product.size }} · {{ product.loadIndex }} load · {{ product.speedIndex }} speed</p>
                             <div class="product-footer">
                                 <strong>€{{ product.price }}</strong>
-                                <button type="button" @click="addToCart(product)">{{ addedProductId === product.id ? 'Added' : 'Add to cart' }}</button>
+                                <button type="button" @click.stop="addToCart(product)">{{ addedProductId === product.id ? 'Added' : 'Add to cart' }}</button>
                             </div>
                         </div>
                     </article>
@@ -89,23 +89,20 @@
                     <button type="button" @click="clearFilters">Clear filters</button>
                 </section>
             </div>
+            <AppFooter />
         </section>
     </main>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { addToCart as addCartItem, getCart, getCartCount } from '../stores/cart'
+import { products } from '../data/products'
+import AuthNav from '../components/AuthNav.vue'
+import AppFooter from '../components/AppFooter.vue'   
 
-const products = [
-    { id: 1, brand: 'Michelin', model: 'Primacy 4+', size: '205/55 R16', loadIndex: '91', speedIndex: 'V', season: 'summer', seasonLabel: 'Summer', price: 112 },
-    { id: 2, brand: 'Continental', model: 'WinterContact TS 870', size: '225/45 R17', loadIndex: '94', speedIndex: 'V', season: 'winter', seasonLabel: 'Winter', price: 138 },
-    { id: 3, brand: 'Goodyear', model: 'Vector 4Seasons Gen-3', size: '195/65 R15', loadIndex: '91', speedIndex: 'H', season: 'all-season', seasonLabel: 'All-season', price: 96 },
-    { id: 4, brand: 'Bridgestone', model: 'Turanza 6', size: '215/60 R16', loadIndex: '95', speedIndex: 'V', season: 'summer', seasonLabel: 'Summer', price: 124 },
-    { id: 5, brand: 'Pirelli', model: 'Cinturato Winter 2', size: '205/60 R16', loadIndex: '92', speedIndex: 'H', season: 'winter', seasonLabel: 'Winter', price: 129 },
-    { id: 6, brand: 'Hankook', model: 'Kinergy 4S2', size: '225/50 R17', loadIndex: '98', speedIndex: 'W', season: 'all-season', seasonLabel: 'All-season', price: 104 },
-]
-
+const router = useRouter()
 const searchQuery = ref('')
 const seasonFilter = ref('all')
 const sortOrder = ref('featured')
@@ -127,7 +124,7 @@ const filteredProducts = computed(() => {
     })
 })
 
-function addToCart(product) {
+ function addToCart(product) {
     const cart = addCartItem(product)
     cartCount.value = getCartCount(cart)
     addedProductId.value = product.id
@@ -141,7 +138,12 @@ function clearFilters() {
     seasonFilter.value = 'all'
     sortOrder.value = 'featured'
 }
+
+function openProductDetails(id) {
+    router.push({ name: 'product-details', params: { id } })
+}
 </script>
+
 
 <style scoped>
 .catalog-shell { min-height: 100vh; padding: 20px; background: #24211f; }
@@ -174,7 +176,7 @@ function clearFilters() {
 .filter-select { padding: 0 16px; }
 .filter-select select { padding: 16px 0; cursor: pointer; }
 .product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 24px; }
-.product-card { overflow: hidden; border: 1px solid #ededed; border-radius: 26px; background: #fff; transition: transform .2s ease, box-shadow .2s ease; }
+.product-card { overflow: hidden; border: 1px solid #ededed; border-radius: 26px; background: #fff; transition: transform .2s ease, box-shadow .2s ease ;cursor: pointer; }
 .product-card:hover { transform: translateY(-3px); box-shadow: 0 16px 30px rgb(25 35 43 / 10%); }
 .product-visual { position: relative; display: grid; min-height: 190px; place-items: center; background: #f2f1ef; }
 .product-visual.season-winter { background: #edf2f2; }
@@ -220,4 +222,7 @@ function clearFilters() {
     .search-field { grid-column: auto; }
     .product-grid { grid-template-columns: 1fr; }
 }
+
+
+
 </style>
