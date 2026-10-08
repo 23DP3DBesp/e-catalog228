@@ -1,41 +1,21 @@
+<script setup>
+import { ref } from 'vue'
+import UiButton from '../components/ui/UiButton.vue'
+const submitted = ref(false)
+</script>
 <template>
-	<main class="auth-shell">
-		<section class="auth-card" aria-labelledby="login-title">
-			<header class="auth-header">
-				<RouterLink class="brand" to="/login" aria-label="E-Catalog home">
-					<span class="brand-mark" aria-hidden="true"></span>
-					<span>E-Catalog</span>
-				</RouterLink>
-				<RouterLink class="header-link" to="/register">Sign Up</RouterLink>
-			</header>
-
-			<div class="auth-content">
-				<h1 id="login-title">Sign In</h1>
-
-				<form class="auth-form" @submit.prevent>
-					<label>
-						<span class="visually-hidden">Email or Username</span>
-						<input type="text" name="email" placeholder="Email or Username" autocomplete="username" />
-					</label>
-
-					<label class="password-field">
-						<span class="visually-hidden">Password</span>
-						<input type="password" name="password" placeholder="Password" autocomplete="current-password" />
-						<span class="password-icon" aria-hidden="true">&#9673;</span>
-					</label>
-
-					<RouterLink class="forgot-link" to="/login">Forgot password?</RouterLink>
-					<button type="submit">Sign In</button>
-				</form>
-			</div>
-
-			<footer class="auth-footer">
-				<span>&copy; 2026 E-Catalog</span>
-				<nav aria-label="Footer navigation">
-					<a href="mailto:contact@example.com">Contact Us</a>
-					<button type="button">English <span aria-hidden="true">⌄</span></button>
-				</nav>
-			</footer>
-		</section>
-	</main>
+  <main class="auth-shell">
+    <section class="auth-content" aria-labelledby="auth-title">
+      <p class="hero-eyebrow">Mans konts</p>
+      <h1 id="auth-title">Pierakstīties</h1>
+      <p class="demo-notice">Demonstrācijas forma. Autorizācija vēl nav pieejama; ievadītie dati netiek nosūtīti vai saglabāti. Izmantojiet tikai testa datus.</p>
+      <form class="auth-form" @submit.prevent="submitted = true">
+        <label><span>E-pasts</span><input type="email" name="email" autocomplete="email" required /></label>
+<label><span>Parole</span><input type="password" name="password" autocomplete="current-password" required /></label>
+        <UiButton type="submit">Pierakstīties</UiButton>
+      </form>
+      <p v-if="submitted" role="status" class="demo-notice">Forma aizpildīta. Šis ir demonstrācijas režīms — konts netiek izveidots un pierakstīšanās nenotiek.</p>
+      <RouterLink class="auth-switch" to="/register">Nav konta? Reģistrēties</RouterLink>
+    </section>
+  </main>
 </template>

@@ -12,6 +12,7 @@ function readStoredCart() {
 function saveCart(cart) {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
     localStorage.setItem('cartCount', String(cart.reduce((total, item) => total + item.quantity, 0)))
+    window.dispatchEvent(new Event('ecatalog:cart-updated'))
 }
 
 export function getCart() {
