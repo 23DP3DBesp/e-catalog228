@@ -1,205 +1,109 @@
-<template>
-    <main class="catalog-shell">
-        <section class="catalog-card">
-
-            <div class="catalog-content">
-                <header class="catalog-heading">
-                    <div>
-                        <p class="catalog-eyebrow">Riepu katalogs</p>
-                        <h1>Atrodi savas riepas.</h1>
-                        <p>Izvēlies riepas savam auto, braukšanas paradumiem un sezonai.</p>
-                    </div>
-                    <div class="catalog-result-count" aria-live="polite">
-                        <strong>{{ filteredProducts.length }}</strong>
-                        <span>atrastas riepas</span>
-                    </div>
-                </header>
-
-                <p class="demo-notice">Demonstrācijas katalogs: cenas un pieejamība nav reāli veikalu piedāvājumi.</p>
-
-                <p v-if="route.query.vehicle === 'demo'" class="demo-notice">{{ compatibilityNotice }}</p>
-                <div v-if="sizeSummary" class="size-summary"><span>{{ sizeSummary }}</span><button type="button" @click="clearFilters">Notīrīt filtrus</button></div>
-                <div id="filters" class="catalog-toolbar">
-                    <label class="search-field">
-                        <span class="search-icon" aria-hidden="true">⌕</span>
-                        <span class="visually-hidden">Meklēt riepas</span>
-                        <input v-model="searchQuery" type="search" placeholder="Meklēt pēc modeļa vai ražotāja" />
-                    </label>
-                    <label class="filter-select">
-                        <span class="visually-hidden">Atlasīt pēc sezonas</span>
-                        <select v-model="seasonFilter">
-                            <option value="all">Visas sezonas</option>
-                            <option value="summer">Vasaras riepas</option>
-                            <option value="winter">Ziemas riepas</option>
-                            <option value="all-season">Vissezonas riepas</option>
-                        </select>
-                    </label>
-                    <label class="filter-select">
-                        <span class="visually-hidden">Kārtot riepas</span>
-                        <select v-model="sortOrder">
-                            <option value="featured">Sākotnējā secība</option>
-                            <option value="price-low">Cena: no zemākās</option>
-                            <option value="price-high">Cena: no augstākās</option>
-                        </select>
-                    </label>
-                </div>
-
-                <div v-if="filteredProducts.length" class="product-grid">
-                    <article v-for="product in filteredProducts" :key="product.id" class="product-card">
-                        <div class="product-visual" :class="`season-${product.season}`">
-                            <span class="tire-shape" aria-hidden="true"></span>
-                            <span class="product-season">{{ product.seasonLabel }}</span>
-                        </div>
-                        <div class="product-card-body">
-                            <div class="product-title-row">
-                                <div>
-                                    <p class="product-brand">{{ product.brand }}</p>
-                                    <h2>{{ product.model }}</h2>
-                                </div>
-                                <span class="product-stock">Demo prece</span>
-                            </div>
-                            <p class="product-spec">{{ product.size }} · slodzes indekss {{ product.loadIndex }} · ātruma indekss {{ product.speedIndex }}</p>
-                            <div class="product-footer">
-                                <strong>{{ formatPrice(product.price) }}</strong>
-                                <button type="button" @click="addToCart(product)">{{ addedProductId === product.id ? 'Pievienots' : 'Pievienot grozam' }}</button>
-                            </div>
-                        </div>
-                    </article>
-                </div>
-
-                <section v-else class="catalog-empty" aria-live="polite">
-                    <span class="catalog-empty-mark" aria-hidden="true">⌕</span>
-                    <h2>Riepas nav atrastas</h2>
-                    <p>Izmēģini citu modeli, ražotāju vai sezonu.</p>
-                    <button type="button" @click="clearFilters">Notīrīt filtrus</button>
-                </section>
-            </div>
-        </section>
-    </main>
-</template>
-
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { matchesDimensions, readCatalogQuery } from '../utils/catalogSearch'
+import { Search, SlidersHorizontal, X, LayoutGrid, List, ArrowDown, Info, RotateCcw } from '@lucide/vue'
+import CatalogFilters from '../components/catalog/CatalogFilters.vue'
+import ProductCard from '../components/catalog/ProductCard.vue'
+import UiButton from '../components/ui/UiButton.vue'
+import UiSkeleton from '../components/ui/UiSkeleton.vue'
+import { getCatalogProducts } from '../services/mock/catalog'
+import { readFilters, writeFilters, filterProducts, activeFilters, defaults } from '../utils/catalogFilters'
 import { compatibilityNotice } from '../data/vehicles'
-import { addToCart as addCartItem } from '../stores/cart'
-
-import { products } from '../data/products'
-import { formatPrice } from '../utils/format'
+import { addToCart } from '../stores/cart'
 
 const route = useRoute()
 const router = useRouter()
-const dimensions = ref({})
-const searchQuery = ref('')
-const seasonFilter = ref('all')
-const sortOrder = ref('featured')
-const addedProductId = ref(null)
-watch(() => route.query, query => {
-    const filters = readCatalogQuery(query)
-    searchQuery.value = filters.q
-    seasonFilter.value = filters.season
-    dimensions.value = { width: filters.width, profile: filters.profile, diameter: filters.diameter }
-}, { immediate: true })
-const sizeSummary = computed(() => [
-    dimensions.value.width && `Platums: ${dimensions.value.width}`,
-    dimensions.value.profile && `Profils: ${dimensions.value.profile}`,
-    dimensions.value.diameter && `Diametrs: R${dimensions.value.diameter}`,
-].filter(Boolean).join(' · '))
-
-const filteredProducts = computed(() => {
-    const query = searchQuery.value.trim().toLowerCase()
-    const filtered = products.filter((product) => {
-        const matchesQuery = !query || `${product.brand} ${product.model} ${product.size}`.toLowerCase().includes(query)
-        const matchesSeason = seasonFilter.value === 'all' || product.season === seasonFilter.value
-        return matchesQuery && matchesSeason && matchesDimensions(product, dimensions.value)
-    })
-
-    return [...filtered].sort((first, second) => {
-        if (sortOrder.value === 'price-low') return first.price - second.price
-        if (sortOrder.value === 'price-high') return second.price - first.price
-        return first.id - second.id
-    })
-})
-
-function addToCart(product) {
-    addCartItem(product)
-    addedProductId.value = product.id
-    window.setTimeout(() => {
-        if (addedProductId.value === product.id) addedProductId.value = null
-    }, 1400)
+const products = ref([])
+const loading = ref(true)
+const error = ref(false)
+const filters = computed(() => readFilters(route.query))
+const filtered = computed(() => filterProducts(products.value, filters.value))
+const chips = computed(() => activeFilters(filters.value))
+const pageSize = 6
+const limit = ref(pageSize)
+watch(() => route.query, () => { limit.value = pageSize })
+const visible = computed(() => filtered.value.slice(0,limit.value))
+const drawer = ref(null)
+const filterToggle = ref(null)
+const drawerOpen = ref(false)
+const feedback = ref('')
+const addedId = ref(null)
+let feedbackTimer
+let alive = true
+async function loadProducts() {
+  loading.value = true
+  error.value = false
+  try { const data = await getCatalogProducts(); if (alive) products.value = data }
+  catch { if (alive) error.value = true }
+  finally { if (alive) loading.value = false }
 }
-
+function update(patch) {
+  limit.value = pageSize
+  router.replace({ query: writeFilters({ ...filters.value, ...patch }, route.query.vehicle) })
+}
 function clearFilters() {
-    searchQuery.value = ''
-    seasonFilter.value = 'all'
-    sortOrder.value = 'featured'
-    dimensions.value = {}
-    router.replace({ path: '/catalog' })
+  limit.value = pageSize
+  router.replace({ query: writeFilters({ ...defaults, brands: [], view: filters.value.view }, route.query.vehicle) })
 }
+function removeChip(chip) {
+  update({ [chip.key]: chip.key === 'brands' ? filters.value.brands.filter(b => b !== chip.value) : defaults[chip.key] })
+}
+function openFilters() {
+  drawer.value.showModal()
+  drawerOpen.value = true
+  document.body.classList.add('catalog-filters-open')
+}
+function closeFilters() { drawer.value?.close() }
+function afterClose() {
+  drawerOpen.value = false
+  document.body.classList.remove('catalog-filters-open')
+  filterToggle.value?.focus()
+}
+function addProduct(product) {
+  if (!product.available) return
+  try {
+    addToCart(product)
+    addedId.value = product.id
+    feedback.value = `${product.brand} ${product.model} pievienota grozam.`
+  } catch {
+    feedback.value = 'Neizdevās saglabāt grozu. Pārbaudiet pārlūka krātuves iestatījumus un mēģiniet vēlreiz.'
+  }
+  clearTimeout(feedbackTimer)
+  feedbackTimer = setTimeout(() => { feedback.value = ''; addedId.value = null }, 4000)
+}
+onMounted(loadProducts)
+onBeforeUnmount(() => {
+  alive = false
+  clearTimeout(feedbackTimer)
+  document.body.classList.remove('catalog-filters-open')
+})
 </script>
-
+<template>
+  <main class="container catalog-page">
+    <nav class="breadcrumbs" aria-label="Atrašanās vieta"><RouterLink to="/">Sākums</RouterLink><span aria-hidden="true">/</span><span>Riepu katalogs</span></nav>
+    <header class="catalog-heading"><div><p class="section-kicker">Atrodi savu nākamo komplektu</p><h1>Riepu katalogs</h1><p>Izmērs, sezona, tavs budžets. Izvēle sākas ar to, kas svarīgs tev.</p></div><span class="catalog-edition">DEMO KOLEKCIJA / 01</span></header>
+    <p class="catalog-demo"><Info :size="18" aria-hidden="true" /><span>Cenas, pieejamība, marķējuma vērtības un popularitāte ir demonstrācijas dati, nevis pārbaudīti ražotāju vai veikalu piedāvājumi. Attēli ir ilustratīvi.</span></p>
+    <p v-if="route.query.vehicle === 'demo'" class="demo-notice">{{ compatibilityNotice }}</p>
+    <div class="catalog-layout">
+      <aside class="desktop-filters" aria-label="Riepu filtri"><div class="filter-heading"><h2>Filtri</h2><button v-if="chips.length" type="button" @click="clearFilters">Notīrīt</button></div><CatalogFilters :filters="filters" :products="products" @change="update" /></aside>
+      <section class="catalog-results" aria-label="Meklēšanas rezultāti">
+        <div class="catalog-toolbar"><label class="catalog-search"><Search :size="19" aria-hidden="true" /><span class="visually-hidden">Meklēt riepas</span><input type="search" :value="filters.q" placeholder="Ražotājs, modelis vai izmērs" @input="update({q:$event.target.value})" /></label><label class="sort-control"><span class="visually-hidden">Kārtot riepas</span><select :value="filters.sort" @change="update({sort:$event.target.value})"><option value="featured">Sākotnējā secība</option><option value="price-low">Cena: no zemākās</option><option value="price-high">Cena: no augstākās</option><option value="brand">Ražotājs</option><option value="popular">Popularitāte (demo)</option></select></label></div>
+        <div class="results-bar"><button ref="filterToggle" class="mobile-filter-button" type="button" aria-controls="catalog-filter-dialog" :aria-expanded="drawerOpen" @click="openFilters"><SlidersHorizontal :size="16" aria-hidden="true" />Filtri<span v-if="chips.length">{{ chips.length }}</span></button><p role="status">{{ loading ? 'Ielādē riepas…' : error ? 'Katalogs nav pieejams' : `Atrasto modeļu skaits: ${filtered.length}` }}</p><div class="view-toggle" role="group" aria-label="Kataloga skats"><button type="button" aria-label="Režģa skats" :aria-pressed="filters.view === 'grid'" @click="update({view:'grid'})"><LayoutGrid :size="18" aria-hidden="true" /></button><button type="button" aria-label="Saraksta skats" :aria-pressed="filters.view === 'list'" @click="update({view:'list'})"><List :size="20" aria-hidden="true" /></button></div></div>
+        <div v-if="chips.length" class="active-filters" aria-label="Aktīvie filtri"><button v-for="chip in chips" :key="chip.key + (chip.value || '')" type="button" :aria-label="`Noņemt filtru: ${chip.label}`" @click="removeChip(chip)">{{ chip.label }}<X :size="13" aria-hidden="true" /></button><button class="reset-all" type="button" @click="clearFilters">Notīrīt visus</button></div>
+        <div v-if="loading" class="catalog-products" aria-busy="true" aria-label="Ielādē katalogu"><div v-for="index in 6" :key="index" class="skeleton-card"><UiSkeleton class="skeleton-image" /><UiSkeleton /><UiSkeleton /></div></div>
+        <section v-else-if="error" class="catalog-empty" role="alert"><RotateCcw :size="32" aria-hidden="true" /><h2>Neizdevās ielādēt katalogu</h2><p>Lūdzu, mēģini vēlreiz.</p><UiButton @click="loadProducts">Mēģināt vēlreiz</UiButton></section>
+        <template v-else-if="filtered.length"><div class="catalog-products" :class="{'is-list':filters.view === 'list'}"><ProductCard v-for="product in visible" :key="product.id" :product="product" :list="filters.view === 'list'" :added="addedId === product.id" @add="addProduct" /></div><div class="load-more"><p>Parādīti {{ visible.length }} no {{ filtered.length }} modeļiem</p><UiButton v-if="visible.length < filtered.length" variant="secondary" @click="limit += pageSize">Rādīt vēl<ArrowDown :size="16" aria-hidden="true" /></UiButton></div></template>
+        <section v-else class="catalog-empty"><Search :size="32" aria-hidden="true" /><h2>Riepas nav atrastas</h2><p>Maini izmēru vai noņem kādu filtru, lai apskatītu citus modeļus.</p><UiButton @click="clearFilters">Notīrīt filtrus</UiButton></section>
+      </section>
+    </div>
+    <dialog id="catalog-filter-dialog" ref="drawer" class="filter-dialog" aria-labelledby="filter-dialog-title" @close="afterClose" @click="event => {if(event.target === drawer) closeFilters()}"><div class="dialog-heading"><h2 id="filter-dialog-title">Riepu filtri</h2><button type="button" class="icon-button" aria-label="Aizvērt filtrus" autofocus @click="closeFilters"><X aria-hidden="true" /></button></div><CatalogFilters :filters="filters" :products="products" @change="update" /><div class="dialog-actions"><UiButton variant="secondary" @click="clearFilters">Notīrīt</UiButton><UiButton @click="closeFilters">Skatīt rezultātus ({{ filtered.length }})</UiButton></div></dialog>
+    <div class="cart-feedback" :class="{visible: feedback}" role="status" aria-live="polite">{{ feedback }}</div>
+  </main>
+</template>
 <style scoped>
-.size-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-block: 24px; font-size: 14px; }
-.size-summary button { min-height: 44px; padding: 8px 16px; border: 1px solid var(--color-border); border-radius: 12px; background: white; color: var(--color-accent-hover); }
-.catalog-shell { padding: 0; background: var(--color-bg); }
-.catalog-card {   background: #fff;  overflow: hidden; }
-.catalog-content { width: min(100% - 40px, 1180px); margin: auto; padding: 68px 0 90px; }
-.catalog-heading { display: flex; align-items: end; justify-content: space-between; gap: 32px; }
-.catalog-eyebrow { margin: 0 0 17px; color: var(--color-accent-hover); font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.catalog-heading h1 { margin: 0; color: var(--color-text); font-size: clamp(48px, 6vw, 78px); font-weight: 400; letter-spacing: -3.8px; line-height: .96; }
-.catalog-heading p:last-child { max-width: 480px; margin: 22px 0 0; color: var(--color-secondary); font-size: 17px; line-height: 1.5; }
-.catalog-result-count { display: flex; align-items: end; gap: 8px; padding-bottom: 5px; color: #858585; font-size: 13px; white-space: nowrap; }
-.catalog-result-count strong { color: var(--color-text); font-size: 30px; font-weight: 500; }
-.catalog-toolbar { display: grid; grid-template-columns: 1fr 175px 175px; gap: 12px; margin-top: 55px; }
-.search-field, .filter-select { display: flex; align-items: center; border: 1px solid #dedede; border-radius: var(--radius); background: #fff; }
-.search-field { padding: 0 20px; }
-.search-icon { margin-right: 10px; color: var(--color-accent-hover); font-size: 25px; line-height: 1; }
-.search-field input, .filter-select select { width: 100%; border: 0; outline: 0; background: transparent; color: var(--color-text); font-size: 14px; }
-.search-field input { padding: 16px 0; }
-.search-field input::placeholder { color: #858585; }
-.filter-select { padding: 0 16px; }
-.filter-select select { padding: 16px 0; cursor: pointer; }
-.product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 24px; }
-.product-card { overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius); background: #fff; transition: transform .2s ease, box-shadow .2s ease; }
-.product-card:hover { transform: translateY(-3px); box-shadow: 0 16px 30px rgb(25 35 43 / 10%); }
-.product-visual { position: relative; display: grid; min-height: 190px; place-items: center; background: #f2f1ef; }
-.product-visual.season-winter { background: #edf2f2; }
-.product-visual.season-all-season { background: #f3f0ea; }
-.tire-shape { width: 112px; height: 112px; border: 20px solid #25292b; border-radius: 50%; box-shadow: inset 0 0 0 8px #4d5355, 0 10px 12px rgb(0 0 0 / 17%); transform: rotate(-18deg); }
-.tire-shape::after { display: block; width: 32px; height: 32px; margin: 20px auto; border: 6px solid #b7b6b0; border-radius: 50%; content: ''; }
-.product-season { position: absolute; top: 16px; right: 16px; padding: 7px 10px; border-radius: 14px; background: rgb(255 255 255 / 72%); color: #4e555a; font-size: 11px; }
-.product-card-body { padding: 20px; }
-.product-title-row { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
-.product-brand { margin: 0 0 5px; color: var(--color-accent-hover); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.product-card h2 { margin: 0; color: var(--color-text); font-size: 19px; font-weight: 600; letter-spacing: -.5px; }
-.product-stock { color: #4d7a54; font-size: 11px; white-space: nowrap; }
-.product-spec { margin: 16px 0 22px; color: var(--color-secondary); font-size: 13px; }
-.product-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.product-footer strong { color: var(--color-text); font-size: 21px; font-weight: 600; }
-.product-footer button, .catalog-empty button { border: 0; border-radius: 22px; background: #161b20; color: #fff; cursor: pointer; font-size: 12px; font-weight: 600; }
-.product-footer button { padding: 11px 14px; }
-.product-footer button:hover, .catalog-empty button:hover { background: #3b4248; }
-.catalog-empty { margin-top: 24px; padding: 80px 20px; border: 1px solid var(--color-border); border-radius: var(--radius); text-align: center; }
-.catalog-empty-mark { color: var(--color-accent-hover); font-size: 42px; }
-.catalog-empty h2 { margin: 18px 0 8px; color: var(--color-text); font-size: 25px; }
-.catalog-empty p { margin: 0 0 22px; color: var(--color-secondary); }
-.catalog-empty button { padding: 13px 18px; }
-@media (max-width: 800px) {
-    .catalog-shell { padding: 0; }
-    .catalog-card { border-radius: 0; }
-    .catalog-content { width: min(100% - 40px, 1180px); padding: 52px 0 65px; }
-    .catalog-heading { align-items: start; flex-direction: column; }
-    .catalog-toolbar { grid-template-columns: 1fr 1fr; }
-    .search-field { grid-column: 1 / -1; }
-    .product-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 520px) {
-    .catalog-heading h1 { font-size: 50px; letter-spacing: -2.5px; }
-    .catalog-heading p:last-child { font-size: 15px; }
-    .catalog-result-count { align-self: flex-end; }
-    .catalog-toolbar { grid-template-columns: 1fr; }
-    .search-field { grid-column: auto; }
-    .product-grid { grid-template-columns: 1fr; }
-}
+.catalog-page { padding-block: 32px 80px; }.breadcrumbs { display: flex; gap: 12px; color: var(--color-secondary); font-size: 12px; }.breadcrumbs a:hover { color: var(--color-accent-hover); }.catalog-heading { display: flex; justify-content: space-between; gap: 24px; align-items: end; margin: 40px 0 28px; }.section-kicker { color: var(--color-accent-hover); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; margin: 0 0 12px; }h1 { font-size: clamp(36px,4vw,52px); font-weight: 600; line-height: 1.1; letter-spacing: -.05em; margin: 0; }.catalog-heading div > p:last-child { margin: 16px 0 0; font-size: 14px; color: var(--color-secondary); }.catalog-edition { color: var(--color-secondary); font-size: 9px; letter-spacing: .12em; white-space: nowrap; }.catalog-demo { display: flex; align-items: start; gap: 12px; padding: 16px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; font-size: 12px; color: #52525b; margin: 0 0 32px; }.catalog-demo svg { flex-shrink: 0; margin-top: 2px; }.catalog-layout { display: grid; grid-template-columns: 240px minmax(0,1fr); gap: 40px; }.filter-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; min-height: 48px; }.filter-heading h2 { margin: 0; font-size: 18px; }.filter-heading button { border: 0; background: transparent; color: var(--color-accent-hover); font-size: 12px; min-height: 44px; }.catalog-results { min-width: 0; }.catalog-toolbar { display: grid; grid-template-columns: minmax(0,1fr) 210px; gap: 12px; }.catalog-search { border: 1px solid var(--color-border); border-radius: 12px; display: flex; align-items: center; gap: 8px; padding-inline: 16px; }.catalog-search svg { color: var(--color-secondary); flex-shrink: 0; }.catalog-search input { width: 100%; min-width: 0; border: 0; padding-inline: 4px; font-size: 13px; }.sort-control select { width: 100%; font-size: 12px; }.results-bar { display: flex; align-items: center; gap: 12px; margin-block: 20px; }.results-bar p { color: var(--color-secondary); font-size: 12px; margin: 0; }.view-toggle { margin-left: auto; display: flex; border: 1px solid var(--color-border); border-radius: 10px; padding: 3px; }.view-toggle button { width: 38px; height: 36px; display: grid; place-items: center; border: 0; background: transparent; border-radius: 7px; color: var(--color-secondary); }.view-toggle button[aria-pressed=true] { color: var(--color-text); background: #f1f2f4; }.active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }.active-filters button { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--color-border); background: var(--color-surface); color: #52525b; border-radius: 8px; padding: 8px 10px; font-size: 11px; min-height: 36px; max-width: 100%; overflow-wrap: anywhere; }.active-filters .reset-all { background: transparent; border-color: transparent; color: var(--color-accent-hover); }.catalog-products { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }.catalog-products.is-list { grid-template-columns: 1fr; }.load-more { text-align: center; padding-top: 32px; }.load-more p { color: var(--color-secondary); font-size: 12px; margin-bottom: 16px; }.catalog-empty { padding: 64px 24px; text-align: center; border: 1px dashed var(--color-border); border-radius: 16px; }.catalog-empty > svg { color: var(--color-secondary); }.catalog-empty h2 { font-size: 24px; letter-spacing: -.6px; }.catalog-empty p { color: var(--color-secondary); font-size: 14px; }.skeleton-card { display: grid; gap: 20px; border: 1px solid var(--color-border); border-radius: 16px; padding: 20px; }.skeleton-image { height: 200px; }.mobile-filter-button { display: none; }.filter-dialog { position: fixed; inset: 0 0 0 auto; width: min(420px,100%); height: 100dvh; max-height: 100dvh; max-width: 100%; margin: 0; border: 0; padding: 24px; background: white; color: var(--color-text); }.filter-dialog::backdrop { background: #11111155; }.dialog-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }.dialog-heading h2 { font-size: 22px; margin: 0; }.dialog-actions { position: sticky; bottom: -24px; background: white; padding-block: 16px; display: flex; gap: 8px; border-top: 1px solid var(--color-border); }.dialog-actions button { padding-inline: 12px; font-size: 12px; flex: 1; }.cart-feedback { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 15; max-width: min(500px,calc(100% - 32px)); width: max-content; padding: 0; background: #18181b; color: white; border-radius: 12px; font-size: 13px; pointer-events: none; }.cart-feedback.visible { padding: 16px 24px; }
+:global(body.catalog-filters-open) { overflow: hidden; }
+@media(max-width: 1200px) { .catalog-products { grid-template-columns: repeat(2,minmax(0,1fr)); }.catalog-layout { gap: 24px; } }
+@media(max-width: 900px) { .desktop-filters { display: none; }.catalog-layout { grid-template-columns: 1fr; }.mobile-filter-button { display: flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--color-border); border-radius: 10px; min-height: 44px; padding: 8px 12px; font-size: 12px; }.catalog-edition { display: none; } }
+@media(max-width: 600px) { .catalog-page { padding-top: 24px; }.catalog-heading { margin-top: 28px; }.catalog-toolbar { grid-template-columns: 1fr; }.catalog-products { grid-template-columns: 1fr; }.results-bar { flex-wrap: wrap; }.results-bar p { font-size: 10px; }.view-toggle button { width: 32px; }.catalog-demo { font-size: 11px; }.catalog-empty { padding: 40px 16px; } }
 </style>
