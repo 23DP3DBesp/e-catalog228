@@ -17,6 +17,8 @@
 
                 <p class="demo-notice">Demonstrācijas katalogs: cenas un pieejamība nav reāli veikalu piedāvājumi.</p>
 
+                <p v-if="route.query.vehicle === 'demo'" class="demo-notice">{{ compatibilityNotice }}</p>
+                <div v-if="sizeSummary" class="size-summary"><span>{{ sizeSummary }}</span><button type="button" @click="clearFilters">Notīrīt filtrus</button></div>
                 <div id="filters" class="catalog-toolbar">
                     <label class="search-field">
                         <span class="search-icon" aria-hidden="true">⌕</span>
@@ -67,7 +69,7 @@
 
                 <section v-else class="catalog-empty" aria-live="polite">
                     <span class="catalog-empty-mark" aria-hidden="true">⌕</span>
-                    <h2>No atrastas riepas</h2>
+                    <h2>Riepas nav atrastas</h2>
                     <p>Izmēģini citu modeli, ražotāju vai sezonu.</p>
                     <button type="button" @click="clearFilters">Notīrīt filtrus</button>
                 </section>
@@ -77,23 +79,40 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { matchesDimensions, readCatalogQuery } from '../utils/catalogSearch'
+import { compatibilityNotice } from '../data/vehicles'
 import { addToCart as addCartItem } from '../stores/cart'
 
 import { products } from '../data/products'
 import { formatPrice } from '../utils/format'
 
+const route = useRoute()
+const router = useRouter()
+const dimensions = ref({})
 const searchQuery = ref('')
 const seasonFilter = ref('all')
 const sortOrder = ref('featured')
 const addedProductId = ref(null)
+watch(() => route.query, query => {
+    const filters = readCatalogQuery(query)
+    searchQuery.value = filters.q
+    seasonFilter.value = filters.season
+    dimensions.value = { width: filters.width, profile: filters.profile, diameter: filters.diameter }
+}, { immediate: true })
+const sizeSummary = computed(() => [
+    dimensions.value.width && `Platums: ${dimensions.value.width}`,
+    dimensions.value.profile && `Profils: ${dimensions.value.profile}`,
+    dimensions.value.diameter && `Diametrs: R${dimensions.value.diameter}`,
+].filter(Boolean).join(' · '))
 
 const filteredProducts = computed(() => {
     const query = searchQuery.value.trim().toLowerCase()
     const filtered = products.filter((product) => {
         const matchesQuery = !query || `${product.brand} ${product.model} ${product.size}`.toLowerCase().includes(query)
         const matchesSeason = seasonFilter.value === 'all' || product.season === seasonFilter.value
-        return matchesQuery && matchesSeason
+        return matchesQuery && matchesSeason && matchesDimensions(product, dimensions.value)
     })
 
     return [...filtered].sort((first, second) => {
@@ -115,10 +134,14 @@ function clearFilters() {
     searchQuery.value = ''
     seasonFilter.value = 'all'
     sortOrder.value = 'featured'
+    dimensions.value = {}
+    router.replace({ path: '/catalog' })
 }
 </script>
 
 <style scoped>
+.size-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-block: 24px; font-size: 14px; }
+.size-summary button { min-height: 44px; padding: 8px 16px; border: 1px solid var(--color-border); border-radius: 12px; background: white; color: var(--color-accent-hover); }
 .catalog-shell { padding: 0; background: var(--color-bg); }
 .catalog-card {   background: #fff;  overflow: hidden; }
 .catalog-content { width: min(100% - 40px, 1180px); margin: auto; padding: 68px 0 90px; }
