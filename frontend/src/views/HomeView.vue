@@ -14,8 +14,8 @@
                 </div>
 
                 <div class="nav-actions">
-                    <RouterLink class="nav-action secondary" to="/login">Sign In</RouterLink>
-                    <RouterLink class="nav-action primary" to="/register">Sign Up</RouterLink>
+                    <RouterLink class="header-link" to="/catalog">Catalog</RouterLink>
+	                <AuthNav />
                 </div>
             </nav>
 
@@ -27,9 +27,13 @@
                     <RouterLink class="hero-button primary" to="/register">Get Started</RouterLink>
                     <RouterLink class="hero-button secondary" to="/about">Learn More</RouterLink>
                 </div>
-            </section>
-
+            </section>     
             <section id="about" class="hero-next-section" aria-label="About E-Catalog"></section>
+            <AppFooter />
         </section>
     </main>
 </template>
+<script setup>
+import AuthNav from '../components/AuthNav.vue'
+import AppFooter from '../components/AppFooter.vue'   
+</script>

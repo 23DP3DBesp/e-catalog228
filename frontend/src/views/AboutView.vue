@@ -6,6 +6,7 @@
                     <span class="brand-mark" aria-hidden="true"></span>
                     <span>E-Catalog</span>
                 </RouterLink>
+                
 
                 <div class="nav-links">
                     <RouterLink class="nav-link" to="/">Home</RouterLink>
@@ -14,11 +15,10 @@
                 </div>
 
                 <div class="nav-actions">
-                    <RouterLink class="nav-action secondary" to="/login">Sign In</RouterLink>
-                    <RouterLink class="nav-action primary" to="/register">Sign Up</RouterLink>
+                    <RouterLink class="header-link" to="/catalog">Catalog</RouterLink>
+	                <AuthNav />
                 </div>
             </nav>
-
             <section id="about" class="hero-section" aria-labelledby="about-title">
                 <p class="hero-eyebrow">About E-Catalog</p>
                 <h1 id="about-title"></h1>
@@ -27,7 +27,12 @@
                 <p>Contanct number: ......</p>
             </section>
 
-            <section id="contact" class="hero-next-section" aria-label="Contact E-Catalog"></section>
+            <section id="contact" class="hero-next-section" aria-label="Contact E-Catalog"><AppFooter /></section>
         </section>
+        
     </main>
 </template>
+<script setup>
+import AuthNav from '../components/AuthNav.vue'
+import AppFooter from '../components/AppFooter.vue'    
+</script>

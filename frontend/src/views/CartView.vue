@@ -9,7 +9,7 @@
 
                 <nav class="cart-nav" aria-label="Cart navigation">
                     <RouterLink to="/catalog">Catalog</RouterLink>
-                    <RouterLink class="cart-sign-in" to="/login">Sign In</RouterLink>
+                    <AuthNav />
                 </nav>
             </header>
 
@@ -91,7 +91,10 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { getCart, getCartCount, removeFromCart, updateCartQuantity } from '../stores/cart'
+import { useRouter } from 'vue-router'
+import AuthNav from '../components/AuthNav.vue'
 
+const router = useRouter()
 const cartItems = ref(getCart())
 
 const cartCount = computed(() => getCartCount(cartItems.value))
@@ -106,7 +109,7 @@ function removeItem(productId) {
 }
 
 function checkout() {
-    window.alert('Checkout will be connected to the payment flow next.')
+    router.push({ name: 'checkout' })
 }
 </script>
 
