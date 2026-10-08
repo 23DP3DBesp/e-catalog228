@@ -39,7 +39,7 @@
                                     <button class="remove-item" type="button" @click="removeItem(item.id)">Remove</button>
                                 </div>
                             </div>
-                            <strong class="cart-item-price">€{{ item.price * item.quantity }}</strong>
+                            <strong class="cart-item-price">{{ formatPrice(item.price * item.quantity) }}</strong>
                         </article>
                     </section>
 
@@ -62,7 +62,7 @@
                         </div>
                         <div class="summary-row">
                             <span>Subtotal</span>
-                            <strong>€{{ subtotal }}</strong>
+                            <strong>{{ formatPrice(subtotal) }}</strong>
                         </div>
                         <div class="summary-row summary-muted">
                             <span>Shipping</span>
@@ -70,7 +70,7 @@
                         </div>
                         <div class="summary-total">
                             <span>Total</span>
-                            <strong>€{{ subtotal }}</strong>
+                            <strong>{{ formatPrice(subtotal) }}</strong>
                         </div>
                         <button class="checkout-button" type="button" :disabled="!cartItems.length" @click="checkout">{{ cartItems.length ? 'Checkout' : 'Checkout' }}</button>
                     </aside>
@@ -90,6 +90,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { formatPrice } from '../utils/format'
 import { getCart, getCartCount, removeFromCart, updateCartQuantity } from '../stores/cart'
 
 const cartItems = ref(getCart())

@@ -34,6 +34,8 @@
                     </div>
                 </header>
 
+                <p class="demo-notice">Demonstrācijas katalogs: cenas un pieejamība nav reāli veikalu piedāvājumi.</p>
+
                 <div id="filters" class="catalog-toolbar">
                     <label class="search-field">
                         <span class="search-icon" aria-hidden="true">⌕</span>
@@ -71,11 +73,11 @@
                                     <p class="product-brand">{{ product.brand }}</p>
                                     <h2>{{ product.model }}</h2>
                                 </div>
-                                <span class="product-stock">In stock</span>
+                                <span class="product-stock">Demo prece</span>
                             </div>
                             <p class="product-spec">{{ product.size }} · {{ product.loadIndex }} load · {{ product.speedIndex }} speed</p>
                             <div class="product-footer">
-                                <strong>€{{ product.price }}</strong>
+                                <strong>{{ formatPrice(product.price) }}</strong>
                                 <button type="button" @click="addToCart(product)">{{ addedProductId === product.id ? 'Added' : 'Add to cart' }}</button>
                             </div>
                         </div>
@@ -97,14 +99,8 @@
 import { computed, ref } from 'vue'
 import { addToCart as addCartItem, getCart, getCartCount } from '../stores/cart'
 
-const products = [
-    { id: 1, brand: 'Michelin', model: 'Primacy 4+', size: '205/55 R16', loadIndex: '91', speedIndex: 'V', season: 'summer', seasonLabel: 'Summer', price: 112 },
-    { id: 2, brand: 'Continental', model: 'WinterContact TS 870', size: '225/45 R17', loadIndex: '94', speedIndex: 'V', season: 'winter', seasonLabel: 'Winter', price: 138 },
-    { id: 3, brand: 'Goodyear', model: 'Vector 4Seasons Gen-3', size: '195/65 R15', loadIndex: '91', speedIndex: 'H', season: 'all-season', seasonLabel: 'All-season', price: 96 },
-    { id: 4, brand: 'Bridgestone', model: 'Turanza 6', size: '215/60 R16', loadIndex: '95', speedIndex: 'V', season: 'summer', seasonLabel: 'Summer', price: 124 },
-    { id: 5, brand: 'Pirelli', model: 'Cinturato Winter 2', size: '205/60 R16', loadIndex: '92', speedIndex: 'H', season: 'winter', seasonLabel: 'Winter', price: 129 },
-    { id: 6, brand: 'Hankook', model: 'Kinergy 4S2', size: '225/50 R17', loadIndex: '98', speedIndex: 'W', season: 'all-season', seasonLabel: 'All-season', price: 104 },
-]
+import { products } from '../data/products'
+import { formatPrice } from '../utils/format'
 
 const searchQuery = ref('')
 const seasonFilter = ref('all')
