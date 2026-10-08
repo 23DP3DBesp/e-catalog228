@@ -1,6 +1,6 @@
 <template>
 	<main class="auth-shell">
-		<section class="auth-card" aria-labelledby="register-title">
+		<section class="auth-card" aria-labelledby="reset-title">
 			<header class="auth-header">
 				<RouterLink class="brand" to="/" aria-label="E-Catalog home">
 					<span class="brand-mark" aria-hidden="true"></span>
@@ -10,28 +10,19 @@
 			</header>
 
 			<div class="auth-content">
-				<h1 id="register-title">Create Account</h1>
+				<h1 id="reset-title">New password</h1>
 
 				<form class="auth-form" @submit.prevent="submit">
-					<label>
-						<span class="visually-hidden">Name</span>
-						<input v-model.trim="name" type="text" name="name" placeholder="Name" autocomplete="name" required />
-					</label>
-
-					<label>
-						<span class="visually-hidden">Email</span>
-						<input v-model.trim="email" type="email" name="email" placeholder="Email" autocomplete="email" required />
-					</label>
-
 					<label class="password-field">
-						<span class="visually-hidden">Password</span>
-						<input v-model="password" :type="showPassword ? 'text' : 'password'" name="password" placeholder="Password (min. 8 characters)" autocomplete="new-password" minlength="8" required />
+						<span class="visually-hidden">New password</span>
+						<input v-model="password" :type="showPassword ? 'text' : 'password'" placeholder="New password (min. 8 characters)" autocomplete="new-password" minlength="8" required />
 						<span class="password-icon" role="button" tabindex="0" :aria-label="showPassword ? 'Hide password' : 'Show password'" @click="showPassword = !showPassword" @keydown.enter="showPassword = !showPassword">&#9673;</span>
 					</label>
 
 					<p v-if="error" class="form-error" role="alert">{{ error }}</p>
 
-					<button type="submit" :disabled="loading">{{ loading ? 'Creating…' : 'Create Account' }}</button>
+					<button type="submit" :disabled="loading">{{ loading ? 'Saving…' : 'Save password' }}</button>
+					<RouterLink class="forgot-link" to="/forgot-password">Request a new link</RouterLink>
 				</form>
 			</div>
 
@@ -48,13 +39,12 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { register } from '../stores/auth'
+import { useRoute, useRouter } from 'vue-router'
+import { resetPassword } from '../stores/auth'
 
+const route = useRoute()
 const router = useRouter()
 
-const name = ref('')
-const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const error = ref('')
@@ -65,8 +55,8 @@ async function submit() {
 	error.value = ''
 	loading.value = true
 	try {
-		await register({ name: name.value, email: email.value, password: password.value })
-		router.push('/catalog')
+		await resetPassword(String(route.query.token ?? ''), password.value)
+		router.push({ name: 'login', query: { reset: '1' } })
 	} catch (e) {
 		error.value = e.message
 	} finally {
