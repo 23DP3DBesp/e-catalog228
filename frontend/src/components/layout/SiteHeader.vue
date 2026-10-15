@@ -15,6 +15,7 @@ const compareCount = ref(getCompared().length)
 const links = [
   { to: '/', label: 'Sākums' },
   { to: '/catalog', label: 'Riepu katalogs' },
+  { to: '/assistant', label: 'Riepu izvēles palīgs' },
   { to: '/about', label: 'Par mums' },
 ]
 function refreshCount() {
