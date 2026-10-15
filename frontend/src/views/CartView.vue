@@ -11,21 +11,21 @@
 
                 <div class="cart-layout">
                     <section v-if="cartItems.length" class="cart-items" aria-label="Groza preces">
-                        <article v-for="item in cartItems" :key="item.id" class="cart-item">
+                        <article v-for="item in cartItems" :key="item.cartKey || `${item.id}:default`" class="cart-item">
                             <div class="cart-item-visual" :class="`season-${item.season}`" aria-hidden="true">
                                 <span class="cart-tire-shape"></span>
                             </div>
                             <div class="cart-item-details">
                                 <p class="cart-item-brand">{{ item.brand }}</p>
                                 <h2>{{ item.model }}</h2>
-                                <p class="cart-item-spec">{{ item.size }} · {{ item.seasonLabel }}</p>
+                                <p class="cart-item-spec">{{ item.size }} · {{ item.seasonLabel }}</p><p v-if="item.merchant" class="cart-item-merchant">{{ item.merchant }} · demo piedāvājums</p>
                                 <div class="cart-item-controls">
                                     <div class="quantity-control" aria-label="Daudzums">
-                                        <button type="button" aria-label="Samazināt daudzumu" @click="changeQuantity(item.id, item.quantity - 1)">−</button>
+                                        <button type="button" aria-label="Samazināt daudzumu" @click="changeQuantity(item.cartKey || item.id, item.quantity - 1)">−</button>
                                         <span>{{ item.quantity }}</span>
-                                        <button type="button" aria-label="Palielināt daudzumu" @click="changeQuantity(item.id, item.quantity + 1)">+</button>
+                                        <button type="button" aria-label="Palielināt daudzumu" @click="changeQuantity(item.cartKey || item.id, item.quantity + 1)">+</button>
                                     </div>
-                                    <button class="remove-item" type="button" @click="removeItem(item.id)">Noņemt</button>
+                                    <button class="remove-item" type="button" @click="removeItem(item.cartKey || item.id)">Noņemt</button>
                                 </div>
                             </div>
                             <strong class="cart-item-price">{{ formatPrice(item.price * item.quantity) }}</strong>
@@ -53,13 +53,14 @@
                             <span>Preču summa</span>
                             <strong>{{ formatPrice(subtotal) }}</strong>
                         </div>
-                        <div class="summary-row summary-muted">
+                        <div class="summary-row">
                             <span>Piegāde</span>
-                            <span>Izmaksas vēl nav zināmas</span>
+                            <strong>{{ totals.shipping === null ? 'Nav zināma' : formatPrice(totals.shipping) }}</strong>
                         </div>
+                        <p v-if="totals.shipping === null" class="shipping-note">Vismaz vienam izvēlētajam piedāvājumam nav norādīta piegādes cena. Gala summa nav zināma.</p>
                         <div class="summary-total">
-                            <span>Bez piegādes</span>
-                            <strong>{{ formatPrice(subtotal) }}</strong>
+                            <span>Kopā</span>
+                            <strong>{{ totals.total === null ? 'Nav zināma' : formatPrice(totals.total) }}</strong>
                         </div>
                         <button class="checkout-button" type="button" :disabled="!cartItems.length" @click="checkout">Noformēt pasūtījumu</button>
                     </aside>
@@ -73,11 +74,13 @@
 import { computed, ref } from 'vue'
 import { formatPrice } from '../utils/format'
 import { getCart, getCartCount, removeFromCart, updateCartQuantity } from '../stores/cart'
+import { calculateCartTotals } from '../utils/orderTotals'
 
 const cartItems = ref(getCart())
 
 const cartCount = computed(() => getCartCount(cartItems.value))
-const subtotal = computed(() => cartItems.value.reduce((total, item) => total + item.price * item.quantity, 0))
+const totals = computed(() => calculateCartTotals(cartItems.value))
+const subtotal = computed(() => totals.value.productSubtotal)
 
 function changeQuantity(productId, quantity) {
     cartItems.value = updateCartQuantity(productId, quantity)
@@ -110,6 +113,7 @@ function checkout() {
 .cart-tire-shape::after { display: block; width: 18px; height: 18px; margin: 11px auto; border: 4px solid #b7b6b0; border-radius: 50%; content: ''; }
 .cart-item-brand { margin: 0 0 4px; color: var(--color-accent-hover); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .cart-item h2 { margin: 0; color: var(--color-text); font-size: 18px; font-weight: 600; }
+.cart-item-merchant { margin: -8px 0 12px; color: var(--color-secondary); font-size: 11px; }
 .cart-item-spec { margin: 8px 0 14px; color: var(--color-secondary); font-size: 13px; }
 .cart-item-controls { display: flex; align-items: center; gap: 16px; }
 .quantity-control { display: inline-flex; align-items: center; gap: 14px; padding: 4px 8px; border: 1px solid #dedede; border-radius: 18px; color: var(--color-text); font-size: 13px; }
@@ -132,12 +136,14 @@ function checkout() {
 .cart-button span { margin-left: 8px; font-size: 17px; }
 .cart-button:hover { filter: brightness(1.08); }
 .cart-summary { align-self: start; padding: 28px; border-radius: var(--radius); background: #f7f6f4; }
-.summary-topline, .summary-row, .summary-total { display: flex; align-items: center; justify-content: space-between; }
-.summary-topline { padding-bottom: 22px; border-bottom: 1px solid #e4e2df; color: var(--color-text); font-size: 16px; font-weight: 600; }
+.summary-topline, .summary-row, .shipping-note { color: var(--color-secondary); font-size: 11px; margin: 10px 0 0; }
+.summary-total { display: flex; align-items: center; justify-content: space-between; }
+.summary-topline { gap: 12px; flex-wrap: wrap; padding-bottom: 22px; border-bottom: 1px solid #e4e2df; color: var(--color-text); font-size: 16px; font-weight: 600; }
 .summary-count, .summary-muted { color: #858585; font-size: 12px; font-weight: 400; }
-.summary-row { padding: 20px 0 0; color: #4e555a; font-size: 14px; }
-.summary-row strong { color: var(--color-text); font-weight: 600; }
+.summary-row { gap: 12px; padding: 20px 0 0; color: #4e555a; font-size: 14px; }
+.summary-row strong { text-align: right; color: var(--color-text); font-weight: 600; }
 .summary-muted { align-items: flex-start; gap: 18px; line-height: 1.4; text-align: right; }
+.shipping-note { color: var(--color-secondary); font-size: 11px; margin: 10px 0 0; }
 .summary-total { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e4e2df; color: var(--color-text); font-size: 16px; font-weight: 600; }
 .summary-total strong { font-size: 20px; }
 .checkout-button { width: 100%; margin-top: 26px; padding: 16px; background: var(--color-accent-hover); color: #fff; cursor: pointer; }
