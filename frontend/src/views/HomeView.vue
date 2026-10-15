@@ -1,5 +1,5 @@
 <script setup>
-import { ArrowRight, ArrowUpRight, Sun, Snowflake, CloudSun, Search, SlidersHorizontal, Info, Sparkles, CircleCheck } from '@lucide/vue'
+import { ArrowRight, ArrowUpRight, Sun, Snowflake, CloudSun, Search, SlidersHorizontal, Info, CircleCheck } from '@lucide/vue'
 import TireSearch from '../components/home/TireSearch.vue'
 import { products } from '../data/products'
 import { formatPrice } from '../utils/format'
@@ -47,16 +47,16 @@ const benefits = [
       </section>
       <section class="home-section featured-section" aria-labelledby="featured-title">
         <div class="section-heading"><div><p class="section-eyebrow">Iepazīsti piedāvājumu</p><h2 id="featured-title">Modeļi, ar kuriem sākt.</h2></div><RouterLink class="text-link" to="/catalog">Visas riepas<ArrowRight :size="18" aria-hidden="true" /></RouterLink></div>
-        <p class="section-description">Redakcionāla demonstrācijas izlase — nevis popularitātes reitings. Cenas ir piemēri, attēli ir ilustratīvi.</p>
+        <p class="section-description">Cenas ir piemēri, attēli ir ilustratīvi.</p>
         <div class="featured-grid">
           <article v-for="product in featured" :key="product.id" class="featured-card">
             <RouterLink :to="{path:'/catalog',query:{q:product.brand+' '+product.model}}" :aria-label="`Apskatīt ${product.brand} ${product.model}`" class="featured-image"><span>{{ product.seasonLabel }}</span><img :src="tireImage" alt="" width="1254" height="1254" loading="lazy" /></RouterLink>
-            <div class="featured-body"><p class="featured-brand">{{ product.brand }}</p><h3>{{ product.model }}</h3><p class="featured-size">{{ product.size }} · {{ product.loadIndex }}{{ product.speedIndex }}</p><div class="featured-price"><div><small>Demo cena / gab.</small><strong>{{ formatPrice(product.price) }}</strong></div><RouterLink class="icon-button" :to="{path:'/catalog',query:{q:product.brand+' '+product.model}}" :aria-label="`Apskatīt ${product.brand} ${product.model} katalogā`"><ArrowUpRight :size="22" aria-hidden="true" /></RouterLink></div></div>
+            <div class="featured-body"><p class="featured-brand">{{ product.brand }}</p><h3>{{ product.model }}</h3><p class="featured-size">{{ product.size }} · {{ product.loadIndex }}{{ product.speedIndex }}</p><div class="featured-price"><div><small>Piemēra cena / gab.</small><strong>{{ formatPrice(product.price) }}</strong></div><RouterLink class="icon-button" :to="{path:'/catalog',query:{q:product.brand+' '+product.model}}" :aria-label="`Apskatīt ${product.brand} ${product.model} katalogā`"><ArrowUpRight :size="22" aria-hidden="true" /></RouterLink></div></div>
           </article>
         </div>
       </section>
       <section class="selection-guide" aria-labelledby="guide-title">
-        <div class="guide-copy"><p class="section-eyebrow">Soli pa solim</p><h2 id="guide-title">Nezini, kuras riepas izvēlēties?</h2><p>Sāc ar trim lietām: apstiprināto riepu izmēru, sezonu un savu budžetu. Pēc tam izpēti katalogā pieejamos modeļus.</p><a href="#tire-search" class="hero-button primary">Sākt riepu meklēšanu<ArrowRight :size="18" aria-hidden="true" /></a><div class="upcoming"><Sparkles :size="16" aria-hidden="true" />AI asistents — plānots nākamajā izstrādes posmā.</div></div>
+        <div class="guide-copy"><p class="section-eyebrow">Soli pa solim</p><h2 id="guide-title">Nezini, kuras riepas izvēlēties?</h2><p>Sāc ar trim lietām: apstiprināto riepu izmēru, sezonu un savu budžetu. Pēc tam izpēti katalogā pieejamos modeļus.</p><a href="#tire-search" class="hero-button primary">Sākt riepu meklēšanu<ArrowRight :size="18" aria-hidden="true" /></a></div>
         <ol class="guide-steps"><li><span>01</span><div><h3>Pārbaudi izmēru</h3><p>Apskati automašīnas dokumentāciju un riepas sāna marķējumu.</p></div></li><li><span>02</span><div><h3>Izvēlies sezonu</h3><p>Padomā, kādos laikapstākļos un ceļa apstākļos brauksi.</p></div></li><li><span>03</span><div><h3>Izpēti modeļus</h3><p>Salīdzini izmērus un cenu piemērus, pielāgojot izvēli savam budžetam.</p></div></li></ol>
       </section>
       <section class="home-section benefits-section" aria-labelledby="benefits-title"><div class="section-heading"><div><p class="section-eyebrow">Mazāk sarežģījumu</p><h2 id="benefits-title">Pārdomāta izvēle sākas ar skaidrību.</h2></div></div><div class="benefits-grid"><article v-for="benefit in benefits" :key="benefit.title"><component :is="benefit.icon" :size="24" :stroke-width="1.5" aria-hidden="true" /><h3>{{ benefit.title }}</h3><p>{{ benefit.text }}</p></article></div></section>

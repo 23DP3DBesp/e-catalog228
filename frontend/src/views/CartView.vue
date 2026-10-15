@@ -18,7 +18,7 @@
                             <div class="cart-item-details">
                                 <p class="cart-item-brand">{{ item.brand }}</p>
                                 <h2>{{ item.model }}</h2>
-                                <p class="cart-item-spec">{{ item.size }} · {{ item.seasonLabel }}</p><p v-if="item.merchant" class="cart-item-merchant">{{ item.merchant }} · demo piedāvājums</p>
+                                <p class="cart-item-spec">{{ item.size }} · {{ item.seasonLabel }}</p><p v-if="item.merchant" class="cart-item-merchant">{{ item.merchant }} · piemēra piedāvājums</p>
                                 <div class="cart-item-controls">
                                     <div class="quantity-control" aria-label="Daudzums">
                                         <button type="button" aria-label="Samazināt daudzumu" @click="changeQuantity(item.cartKey || item.id, item.quantity - 1)">−</button>
