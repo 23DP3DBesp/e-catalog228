@@ -46,15 +46,15 @@
 
                     <aside class="cart-summary" aria-label="Pasūtījuma kopsavilkums">
                         <div class="summary-topline">
-                            <span>Pasūtījuma kopsavilkums</span>
-                            <span class="summary-count">Daudzums: {{ cartCount }}</span>
+                            <p>Pasūtījuma kopsavilkums </p>
+                            <p class="summary-count">Daudzums: {{ cartCount }}</p>
                         </div>
                         <div class="summary-row">
-                            <span>Preču summa</span>
+                            <span>Preču summa </span>
                             <strong>{{ formatPrice(subtotal) }}</strong>
                         </div>
                         <div class="summary-row">
-                            <span>Piegāde</span>
+                            <span>Piegāde </span>
                             <strong>{{ totals.shipping === null ? 'Nav zināma' : formatPrice(totals.shipping) }}</strong>
                         </div>
                         <p v-if="totals.shipping === null" class="shipping-note">Vismaz vienam izvēlētajam piedāvājumam nav norādīta piegādes cena. Gala summa nav zināma.</p>
