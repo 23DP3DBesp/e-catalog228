@@ -160,4 +160,4 @@ async function getFacets() {
   };
 }
 
-module.exports = { listProducts, getProduct, getProductOffers, getFacets };
+module.exports = { listProducts, getProduct, getProductOffers, getFacets, formatProduct };
