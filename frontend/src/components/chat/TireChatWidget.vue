@@ -1,9 +1,12 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { MessageCircle, Send, X } from '@lucide/vue'
+import { isDemoMode, sendChatMessage } from '../../services/api.js'
 
 const isOpen = ref(false)
 const question = ref('')
+const sending = ref(false)
+const error = ref('')
 const messages = ref([])
 const launcher = ref(null)
 const input = ref(null)
@@ -19,19 +22,35 @@ function closeOnEscape(event) {
   if (event.key === 'Escape' && isOpen.value) toggleChat()
 }
 
-function sendQuestion() {
+async function sendQuestion() {
   const text = question.value.trim()
-  if (!text) return
+  if (!text || sending.value) return
 
-  messages.value.push(
-    { id: Date.now(), from: 'user', text },
-    { id: Date.now() + 1, from: 'assistant', text: 'Paldies par jautājumu! Atbildes būs pieejamas, kad čatam pieslēgsim API.' },
-  )
+  messages.value.push({ id: Date.now(), from: 'user', text })
   question.value = ''
+  error.value = ''
+  sending.value = true
   nextTick(() => {
     if (messageList.value) messageList.value.scrollTop = messageList.value.scrollHeight
-    input.value?.focus()
   })
+
+  try {
+    if (isDemoMode) {
+      messages.value.push({ id: Date.now() + 1, from: 'assistant', text: 'Čats darbojas demonstrācijas režīmā. Atbildes būs pieejamas pēc API pieslēgšanas.' })
+      return
+    }
+    const result = await sendChatMessage(text)
+    if (typeof result.answer !== 'string' || !result.answer.trim()) throw new Error('Serveris neatgrieza atbildi.')
+    messages.value.push({ id: Date.now() + 1, from: 'assistant', text: result.answer })
+  } catch (cause) {
+    error.value = cause.message || 'Neizdevās nosūtīt jautājumu.'
+    question.value = text
+  } finally {
+    sending.value = false
+    await nextTick()
+    if (messageList.value) messageList.value.scrollTop = messageList.value.scrollHeight
+    input.value?.focus()
+  }
 }
 
 onMounted(() => window.addEventListener('keydown', closeOnEscape))
@@ -57,6 +76,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', closeOnEscape))
       <div v-for="message in messages" :key="message.id" class="tire-chat__message" :class="`tire-chat__message--${message.from}`">
         {{ message.text }}
       </div>
+      <p v-if="sending" class="tire-chat__note" role="status">Meklēju atbildi…</p>
+      <p v-if="error" class="tire-chat__error" role="alert">{{ error }}</p>
     </div>
 
     <form class="tire-chat__form" @submit.prevent="sendQuestion">
@@ -70,8 +91,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', closeOnEscape))
         placeholder="Raksti jautājumu..."
         autocomplete="off"
       />
-      <button type="submit" aria-label="Nosūtīt jautājumu" :disabled="!question.trim()">
-        <Send :size="18" />
+      <button type="submit" aria-label="Nosūtīt jautājumu" :disabled="!question.trim() || sending">
+        <Send v-if="!sending" :size="18" />
+        <span v-else aria-hidden="true">…</span>
       </button>
     </form>
   </section>
@@ -133,6 +155,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', closeOnEscape))
 .tire-chat__message { max-width: 85%; padding: 10px 12px; border-radius: 12px; font-size: 14px; line-height: 1.45; }
 .tire-chat__message--user { align-self: flex-end; color: #fff; background: var(--color-accent-hover); border-bottom-right-radius: 4px; }
 .tire-chat__message--assistant { background: var(--color-surface); border-bottom-left-radius: 4px; }
+.tire-chat__error { margin: 0; color: #b42318; font-size: 13px; }
 .tire-chat__form { display: flex; align-items: center; gap: 8px; padding: 12px; border-top: 1px solid var(--color-border); }
 .tire-chat__form input { width: 0; min-width: 0; min-height: 44px; flex: 1; padding: 10px 12px; font-size: 14px; }
 .tire-chat__form button { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; padding: 0; color: #fff; background: var(--color-accent-hover); border: 0; border-radius: 10px; }

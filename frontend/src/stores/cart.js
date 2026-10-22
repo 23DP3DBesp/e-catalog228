@@ -15,6 +15,7 @@ function saveCart(cart) {
   window.dispatchEvent(new Event('ecatalog:cart-updated'))
 }
 export function getCart() { return readStoredCart() }
+export function clearCart() { saveCart([]); return [] }
 export function addToCart(product) {
   const cart = readStoredCart()
   const incoming = { ...product, cartKey: product.cartKey || `${product.id}:${product.offerId || 'default'}` }
