@@ -1,25 +1,28 @@
 {
   "dependencies": {
-    "express": "^5.2.1"
+    "@supabase/server": "^1.6.1",
+    "@supabase/supabase-js": "^2.116.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "express": "^4.22.3",
+    "express-validator": "^7.3.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.10.1"
   },
   "name": "e-catalog_backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.mjs",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:dev": "nodemon ./src/index.mjs",
-    "start": "node ./src/index.mjs"
+    "start:dev": "nodemon ./src/index.js",
+    "start": "node ./src/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
-  "dependencies":{
-    "express": "^4.18.2"
-  },
   "devDependencies": {
     "nodemon": "^3.1.14"
-  },
-  "type": "module"
+  }
 }
