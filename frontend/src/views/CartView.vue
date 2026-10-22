@@ -62,7 +62,16 @@
                             <span>Kopā</span>
                             <strong>{{ totals.total === null ? 'Nav zināma' : formatPrice(totals.total) }}</strong>
                         </div>
-                        <button class="checkout-button" type="button" :disabled="!cartItems.length" @click="checkout">Noformēt pasūtījumu</button>
+                        <button class="checkout-button" type="button" :disabled="!cartItems.length" @click="checkoutOpen = !checkoutOpen">{{ checkoutOpen ? 'Aizvērt pasūtījumu' : 'Noformēt pasūtījumu' }}</button>
+                        <form v-if="checkoutOpen" class="checkout-form" @submit.prevent="submitOrder">
+                            <label>Vārds<input v-model.trim="customer.name" name="name" autocomplete="name" maxlength="100" required /></label>
+                            <label>E-pasts<input v-model.trim="customer.email" name="email" type="email" autocomplete="email" required /></label>
+                            <label>Tālrunis<input v-model.trim="customer.phone" name="phone" type="tel" autocomplete="tel" maxlength="30" required /></label>
+                            <label>Piegādes adrese<input v-model.trim="customer.address" name="address" autocomplete="street-address" maxlength="200" required /></label>
+                            <button class="checkout-button" type="submit" :disabled="submitting">{{ submitting ? 'Nosūta…' : 'Nosūtīt pasūtījumu' }}</button>
+                        </form>
+                        <p v-if="checkoutMessage" class="checkout-feedback" role="status">{{ checkoutMessage }}</p>
+                        <p v-if="checkoutError" class="checkout-feedback checkout-feedback--error" role="alert">{{ checkoutError }}</p>
                     </aside>
                 </div>
             </div>
@@ -73,14 +82,20 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { formatPrice } from '../utils/format'
-import { getCart, getCartCount, removeFromCart, updateCartQuantity } from '../stores/cart'
+import { clearCart, getCart, getCartCount, removeFromCart, updateCartQuantity } from '../stores/cart'
 import { calculateCartTotals } from '../utils/orderTotals'
+import { createOrder, isDemoMode } from '../services/api.js'
 
 const cartItems = ref(getCart())
 
 const cartCount = computed(() => getCartCount(cartItems.value))
 const totals = computed(() => calculateCartTotals(cartItems.value))
 const subtotal = computed(() => totals.value.productSubtotal)
+const checkoutOpen = ref(false)
+const submitting = ref(false)
+const checkoutMessage = ref('')
+const checkoutError = ref('')
+const customer = ref({ name: '', email: '', phone: '', address: '' })
 
 function changeQuantity(productId, quantity) {
     cartItems.value = updateCartQuantity(productId, quantity)
@@ -90,8 +105,27 @@ function removeItem(productId) {
     cartItems.value = removeFromCart(productId)
 }
 
-function checkout() {
-    window.alert('Demonstrācijas režīms. Pasūtījuma noformēšana būs pieejama nākamajā izstrādes posmā; pasūtījums nav nosūtīts.')
+async function submitOrder() {
+    checkoutMessage.value = ''
+    checkoutError.value = ''
+    if (isDemoMode) {
+        checkoutMessage.value = 'Demonstrācijas režīmā pasūtījums netiek nosūtīts. Pieslēdz serveri, lai to noformētu.'
+        return
+    }
+    submitting.value = true
+    try {
+        const result = await createOrder({
+            customer: { ...customer.value },
+            items: cartItems.value.map(item => ({ productId: item.id, offerId: item.offerId || null, quantity: item.quantity })),
+        })
+        checkoutMessage.value = result.message || `Pasūtījums ${result.orderId ? `#${result.orderId} ` : ''}ir nosūtīts.`
+        cartItems.value = clearCart()
+        checkoutOpen.value = false
+    } catch (cause) {
+        checkoutError.value = cause.message
+    } finally {
+        submitting.value = false
+    }
 }
 </script>
 
@@ -147,6 +181,12 @@ function checkout() {
 .summary-total { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e4e2df; color: var(--color-text); font-size: 16px; font-weight: 600; }
 .summary-total strong { font-size: 20px; }
 .checkout-button { width: 100%; margin-top: 26px; padding: 16px; background: var(--color-accent-hover); color: #fff; cursor: pointer; }
+.checkout-form { display: grid; gap: 12px; margin-top: 18px; }
+.checkout-form label { display: grid; gap: 6px; font-size: 12px; }
+.checkout-form input { min-height: 42px; padding: 9px 11px; font-size: 13px; }
+.checkout-form .checkout-button { margin-top: 2px; }
+.checkout-feedback { margin: 12px 0 0; color: var(--color-secondary); font-size: 12px; line-height: 1.5; }
+.checkout-feedback--error { color: #b42318; }
 
 @media (max-width: 760px) {
     .cart-shell { padding: 0; }
