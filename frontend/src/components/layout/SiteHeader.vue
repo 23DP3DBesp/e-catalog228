@@ -1,11 +1,14 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useRoute } from 'vue-router'
-import { Menu, X, ShoppingBag, UserRound, CircleDot, ArrowUpRight, Heart, Scale } from '@lucide/vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Menu, X, ShoppingBag, UserRound, CircleDot, ArrowUpRight, Heart, Scale, LogOut } from '@lucide/vue'
 import { getCartCount } from '../../stores/cart'
 import { getFavorites, getCompared } from '../../stores/selection'
+import { clearAuth, useAuth } from '../../services/auth.js'
 
 const route = useRoute()
+const router = useRouter()
+const { user, isAuthenticated } = useAuth()
 const drawer = ref(null)
 const toggle = ref(null)
 const isOpen = ref(false)
@@ -18,6 +21,11 @@ const links = [
   { to: '/assistant', label: 'Riepu izvēles palīgs' },
   { to: '/about', label: 'Par mums' },
 ]
+function logOut() {
+  clearAuth()
+  closeMenu()
+  router.push('/')
+}
 function refreshCount() {
   count.value = getCartCount()
   favoriteCount.value = getFavorites().length
@@ -57,7 +65,11 @@ onBeforeUnmount(() => {
       <div class="header-actions">
         <RouterLink class="icon-button selection-access" to="/favorites" :aria-label="`Izlase. Riepu skaits: ${favoriteCount}`"><Heart :size="20" aria-hidden="true" /><span v-if="favoriteCount" class="cart-badge">{{ favoriteCount }}</span></RouterLink>
         <RouterLink class="icon-button selection-access" to="/compare" :aria-label="`Salīdzinājums. Riepu skaits: ${compareCount}`"><Scale :size="20" aria-hidden="true" /><span v-if="compareCount" class="cart-badge">{{ compareCount }}</span></RouterLink>
-        <RouterLink class="icon-button account-link" to="/login" aria-label="Pierakstīties"><UserRound :size="21" aria-hidden="true" /></RouterLink>
+        <RouterLink v-if="!isAuthenticated" class="icon-button account-link" to="/login" aria-label="Pierakstīties" title="Pierakstīties"><UserRound :size="21" aria-hidden="true" /></RouterLink>
+        <div v-else class="signed-in-actions" :title="user?.email || 'Pierakstījies'">
+          <span class="signed-in-name">{{ user?.displayName || user?.email }}</span>
+          <button class="icon-button logout-button" type="button" aria-label="Izrakstīties" title="Izrakstīties" @click="logOut"><LogOut :size="20" aria-hidden="true" /></button>
+        </div>
         <RouterLink class="icon-button cart-access" to="/cart" :aria-label="`Grozs. Riepu skaits: ${count}`">
           <ShoppingBag :size="21" aria-hidden="true" /><span v-if="count" class="cart-badge">{{ count }}</span>
         </RouterLink>
@@ -71,7 +83,11 @@ onBeforeUnmount(() => {
         <RouterLink to="/favorites" @click="closeMenu">Izlase <span>{{ favoriteCount }}</span><Heart :size="20" aria-hidden="true" /></RouterLink>
         <RouterLink to="/compare" @click="closeMenu">Salīdzināt <span>{{ compareCount }}</span><Scale :size="20" aria-hidden="true" /></RouterLink>
         <RouterLink to="/cart" @click="closeMenu">Grozs <span>{{ count }}</span></RouterLink>
-        <RouterLink to="/login" @click="closeMenu">Pierakstīties<UserRound :size="20" aria-hidden="true" /></RouterLink>
+        <RouterLink v-if="!isAuthenticated" to="/login" @click="closeMenu">Pierakstīties<UserRound :size="20" aria-hidden="true" /></RouterLink>
+        <div v-else class="drawer-auth-row">
+          <span>{{ user?.displayName || user?.email }}</span>
+          <button class="ui-button ui-button--secondary" type="button" @click="logOut"><LogOut :size="18" aria-hidden="true" /> Izrakstīties</button>
+        </div>
       </nav>
       <p class="drawer-note">Pārdomāta riepu izvēle sākas šeit.</p>
     </dialog>

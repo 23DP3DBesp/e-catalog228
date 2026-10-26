@@ -1,7 +1,10 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { setAuth } from '../services/auth.js'
 import UiButton from '../components/ui/UiButton.vue'
 import { isDemoMode, signIn } from '../services/api.js'
+const router = useRouter()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
@@ -17,7 +20,9 @@ async function submit() {
   loading.value = true
   try {
     const result = await signIn({ email: email.value, password: password.value })
-    message.value = result.message || 'Pierakstīšanās izdevās.'
+    setAuth(result)
+    message.value = 'Pierakstīšanās izdevās! Tiek atvērts katalogs.'
+    await router.push('/catalog')
   } catch (cause) {
     error.value = cause.message
   } finally {

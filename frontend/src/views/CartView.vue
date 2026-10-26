@@ -1,34 +1,81 @@
+
 <template>
     <main class="cart-shell">
         <section class="cart-card" aria-labelledby="cart-title">
-
             <div class="cart-content">
                 <div class="cart-heading">
                     <p class="cart-eyebrow">Tava izvēle</p>
                     <h1 id="cart-title">Grozs</h1>
-                    <p class="cart-description">Pārskati izvēlētās riepas un norādi nepieciešamo daudzumu.</p>
+                    <p class="cart-description">
+                        Pārskati izvēlētās riepas un norādi nepieciešamo daudzumu.
+                    </p>
                 </div>
 
                 <div class="cart-layout">
-                    <section v-if="cartItems.length" class="cart-items" aria-label="Groza preces">
-                        <article v-for="item in cartItems" :key="item.cartKey || `${item.id}:default`" class="cart-item">
-                            <div class="cart-item-visual" :class="`season-${item.season}`" aria-hidden="true">
+                    <section
+                        v-if="cartItems.length"
+                        class="cart-items"
+                        aria-label="Groza preces"
+                    >
+                        <article
+                            v-for="item in cartItems"
+                            :key="item.cartKey || `${item.id}:default`"
+                            class="cart-item"
+                        >
+                            <div
+                                class="cart-item-visual"
+                                :class="`season-${item.season}`"
+                                aria-hidden="true"
+                            >
                                 <span class="cart-tire-shape"></span>
                             </div>
+
                             <div class="cart-item-details">
                                 <p class="cart-item-brand">{{ item.brand }}</p>
                                 <h2>{{ item.model }}</h2>
-                                <p class="cart-item-spec">{{ item.size }} · {{ item.seasonLabel }}</p><p v-if="item.merchant" class="cart-item-merchant">{{ item.merchant }} · piemēra piedāvājums</p>
+
+                                <p class="cart-item-spec">
+                                    {{ item.size }} · {{ item.seasonLabel }}
+                                </p>
+
+                                <p v-if="item.merchant" class="cart-item-merchant">
+                                    {{ item.merchant }} · piemēra piedāvājums
+                                </p>
+
                                 <div class="cart-item-controls">
                                     <div class="quantity-control" aria-label="Daudzums">
-                                        <button type="button" aria-label="Samazināt daudzumu" @click="changeQuantity(item.cartKey || item.id, item.quantity - 1)">−</button>
+                                        <button
+                                            type="button"
+                                            aria-label="Samazināt daudzumu"
+                                            @click="changeQuantity(item.cartKey || item.id, item.quantity - 1)"
+                                        >
+                                            −
+                                        </button>
+
                                         <span>{{ item.quantity }}</span>
-                                        <button type="button" aria-label="Palielināt daudzumu" @click="changeQuantity(item.cartKey || item.id, item.quantity + 1)">+</button>
+
+                                        <button
+                                            type="button"
+                                            aria-label="Palielināt daudzumu"
+                                            @click="changeQuantity(item.cartKey || item.id, item.quantity + 1)"
+                                        >
+                                            +
+                                        </button>
                                     </div>
-                                    <button class="remove-item" type="button" @click="removeItem(item.cartKey || item.id)">Noņemt</button>
+
+                                    <button
+                                        class="remove-item"
+                                        type="button"
+                                        @click="removeItem(item.cartKey || item.id)"
+                                    >
+                                        Noņemt
+                                    </button>
                                 </div>
                             </div>
-                            <strong class="cart-item-price">{{ formatPrice(item.price * item.quantity) }}</strong>
+
+                            <strong class="cart-item-price">
+                                {{ formatPrice(item.price * item.quantity) }}
+                            </strong>
                         </article>
                     </section>
 
@@ -39,39 +86,158 @@
                             <span class="empty-icon-wheel empty-icon-wheel-left"></span>
                             <span class="empty-icon-wheel empty-icon-wheel-right"></span>
                         </div>
+
                         <h2>Tavs grozs ir tukšs</h2>
-                        <p>Apskati riepu katalogu un pievieno savai izvēlei piemērotas riepas.</p>
-                        <RouterLink class="cart-button" to="/catalog">Atvērt katalogu <span aria-hidden="true">&#8594;</span></RouterLink>
+                        <p>
+                            Apskati riepu katalogu un pievieno savai izvēlei
+                            piemērotas riepas.
+                        </p>
+
+                        <RouterLink class="cart-button" to="/catalog">
+                            Atvērt katalogu
+                            <span aria-hidden="true">&#8594;</span>
+                        </RouterLink>
                     </section>
 
                     <aside class="cart-summary" aria-label="Pasūtījuma kopsavilkums">
                         <div class="summary-topline">
-                            <p>Pasūtījuma kopsavilkums </p>
+                            <p>Pasūtījuma kopsavilkums</p>
                             <p class="summary-count">Daudzums: {{ cartCount }}</p>
                         </div>
+
                         <div class="summary-row">
-                            <span>Preču summa </span>
+                            <span>Preču summa</span>
                             <strong>{{ formatPrice(subtotal) }}</strong>
                         </div>
+
                         <div class="summary-row">
-                            <span>Piegāde </span>
-                            <strong>{{ totals.shipping === null ? 'Nav zināma' : formatPrice(totals.shipping) }}</strong>
+                            <span>Piegāde</span>
+                            <strong>
+                                {{ totals.shipping === null
+                                    ? 'Nav zināma'
+                                    : formatPrice(totals.shipping) }}
+                            </strong>
                         </div>
-                        <p v-if="totals.shipping === null" class="shipping-note">Vismaz vienam izvēlētajam piedāvājumam nav norādīta piegādes cena. Gala summa nav zināma.</p>
+
+                        <p v-if="totals.shipping === null" class="shipping-note">
+                            Vismaz vienam izvēlētajam piedāvājumam nav norādīta
+                            piegādes cena. Gala summa nav zināma.
+                        </p>
+
                         <div class="summary-total">
                             <span>Kopā</span>
-                            <strong>{{ totals.total === null ? 'Nav zināma' : formatPrice(totals.total) }}</strong>
+                            <strong>
+                                {{ totals.total === null
+                                    ? 'Nav zināma'
+                                    : formatPrice(totals.total) }}
+                            </strong>
                         </div>
-                        <button class="checkout-button" type="button" :disabled="!cartItems.length" @click="checkoutOpen = !checkoutOpen">{{ checkoutOpen ? 'Aizvērt pasūtījumu' : 'Noformēt pasūtījumu' }}</button>
-                        <form v-if="checkoutOpen" class="checkout-form" @submit.prevent="submitOrder">
-                            <label>Vārds<input v-model.trim="customer.name" name="name" autocomplete="name" maxlength="100" required /></label>
-                            <label>E-pasts<input v-model.trim="customer.email" name="email" type="email" autocomplete="email" required /></label>
-                            <label>Tālrunis<input v-model.trim="customer.phone" name="phone" type="tel" autocomplete="tel" maxlength="30" required /></label>
-                            <label>Piegādes adrese<input v-model.trim="customer.address" name="address" autocomplete="street-address" maxlength="200" required /></label>
-                            <button class="checkout-button" type="submit" :disabled="submitting">{{ submitting ? 'Nosūta…' : 'Nosūtīt pasūtījumu' }}</button>
+
+                        <button
+                            class="checkout-button"
+                            type="button"
+                            :disabled="!cartItems.length || submitting"
+                            @click="checkoutOpen = !checkoutOpen"
+                        >
+                            {{ checkoutOpen ? 'Aizvērt pasūtījumu' : 'Noformēt pasūtījumu' }}
+                        </button>
+
+                        <form
+                            v-if="checkoutOpen"
+                            class="checkout-form"
+                            @submit.prevent="submitOrder"
+                        >
+                            <label>
+                                Vārds, uzvārds
+                                <input
+                                    v-model.trim="customer.fullName"
+                                    name="fullName"
+                                    autocomplete="name"
+                                    maxlength="100"
+                                    required
+                                />
+                            </label>
+
+                            <label>
+                                E-pasts
+                                <input
+                                    v-model.trim="customer.email"
+                                    name="email"
+                                    type="email"
+                                    autocomplete="email"
+                                    required
+                                />
+                            </label>
+
+                            <label>
+                                Tālrunis
+                                <input
+                                    v-model.trim="customer.phone"
+                                    name="phone"
+                                    type="tel"
+                                    autocomplete="tel"
+                                    maxlength="30"
+                                    required
+                                />
+                            </label>
+
+                            <label>
+                                Piegādes adrese
+                                <input
+                                    v-model.trim="customer.address"
+                                    name="address"
+                                    autocomplete="street-address"
+                                    maxlength="200"
+                                    required
+                                />
+                            </label>
+
+                            <label>
+                                Pilsēta
+                                <input
+                                    v-model.trim="customer.city"
+                                    name="city"
+                                    autocomplete="address-level2"
+                                    maxlength="100"
+                                    required
+                                />
+                            </label>
+
+                            <label>
+                                Pasta indekss
+                                <input
+                                    v-model.trim="customer.postalCode"
+                                    name="postalCode"
+                                    autocomplete="postal-code"
+                                    maxlength="20"
+                                    required
+                                />
+                            </label>
+
+                            <button
+                                class="checkout-button"
+                                type="submit"
+                                :disabled="submitting"
+                            >
+                                {{ submitting ? 'Nosūta…' : 'Nosūtīt pasūtījumu' }}
+                            </button>
                         </form>
-                        <p v-if="checkoutMessage" class="checkout-feedback" role="status">{{ checkoutMessage }}</p>
-                        <p v-if="checkoutError" class="checkout-feedback checkout-feedback--error" role="alert">{{ checkoutError }}</p>
+
+                        <p
+                            v-if="checkoutMessage"
+                            class="checkout-feedback"
+                            role="status"
+                        >
+                            {{ checkoutMessage }}
+                        </p>
+
+                        <p
+                            v-if="checkoutError"
+                            class="checkout-feedback checkout-feedback--error"
+                            role="alert"
+                        >
+                            {{ checkoutError }}
+                        </p>
                     </aside>
                 </div>
             </div>
@@ -82,7 +248,13 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { formatPrice } from '../utils/format'
-import { clearCart, getCart, getCartCount, removeFromCart, updateCartQuantity } from '../stores/cart'
+import {
+    clearCart,
+    getCart,
+    getCartCount,
+    removeFromCart,
+    updateCartQuantity,
+} from '../stores/cart'
 import { calculateCartTotals } from '../utils/orderTotals'
 import { createOrder, isDemoMode } from '../services/api.js'
 
@@ -91,11 +263,20 @@ const cartItems = ref(getCart())
 const cartCount = computed(() => getCartCount(cartItems.value))
 const totals = computed(() => calculateCartTotals(cartItems.value))
 const subtotal = computed(() => totals.value.productSubtotal)
+
 const checkoutOpen = ref(false)
 const submitting = ref(false)
 const checkoutMessage = ref('')
 const checkoutError = ref('')
-const customer = ref({ name: '', email: '', phone: '', address: '' })
+
+const customer = ref({
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    postalCode: '',
+})
 
 function changeQuantity(productId, quantity) {
     cartItems.value = updateCartQuantity(productId, quantity)
@@ -108,21 +289,67 @@ function removeItem(productId) {
 async function submitOrder() {
     checkoutMessage.value = ''
     checkoutError.value = ''
-    if (isDemoMode) {
-        checkoutMessage.value = 'Demonstrācijas režīmā pasūtījums netiek nosūtīts. Pieslēdz serveri, lai to noformētu.'
+
+    if (!cartItems.value.length) {
+        checkoutError.value = 'Grozs ir tukšs.'
         return
     }
+
+    if (isDemoMode) {
+        checkoutMessage.value =
+            'Demonstrācijas režīmā pasūtījums netiek nosūtīts. Pieslēdz serveri, lai to noformētu.'
+        return
+    }
+
+    // Every order item must reference a real offer from the database.
+    const hasInvalidOffer = cartItems.value.some((item) => {
+        const offerId = Number(item.offerId)
+        return !Number.isInteger(offerId) || offerId <= 0
+    })
+
+    if (hasInvalidOffer) {
+        checkoutError.value =
+            'Kādam produktam trūkst derīga piedāvājuma. Noņem šo preci no groza un pievieno to vēlreiz no kataloga.'
+        return
+    }
+
     submitting.value = true
+
     try {
         const result = await createOrder({
-            customer: { ...customer.value },
-            items: cartItems.value.map(item => ({ productId: item.id, offerId: item.offerId || null, quantity: item.quantity })),
+            customer: {
+                fullName: customer.value.fullName,
+                phone: customer.value.phone,
+                address: customer.value.address,
+                city: customer.value.city,
+                postalCode: customer.value.postalCode,
+            },
+            items: cartItems.value.map((item) => ({
+                offerId: Number(item.offerId),
+                quantity: Number(item.quantity),
+            })),
         })
-        checkoutMessage.value = result.message || `Pasūtījums ${result.orderId ? `#${result.orderId} ` : ''}ir nosūtīts.`
+
+        checkoutMessage.value =
+            result.message ||
+            `Pasūtījums ${result.orderId ? `#${result.orderId} ` : ''}ir nosūtīts.`
+
         cartItems.value = clearCart()
         checkoutOpen.value = false
+
+        customer.value = {
+            fullName: '',
+            email: '',
+            phone: '',
+            address: '',
+            city: '',
+            postalCode: '',
+        }
     } catch (cause) {
-        checkoutError.value = cause.message
+        checkoutError.value =
+            cause instanceof Error
+                ? cause.message
+                : 'Pasūtījumu neizdevās nosūtīt. Mēģini vēlreiz.'
     } finally {
         submitting.value = false
     }
@@ -131,7 +358,7 @@ async function submitOrder() {
 
 <style scoped>
 .cart-shell { display: flex; padding: 0; background: var(--color-bg); }
-.cart-card { display: flex; width: 100%;  flex-direction: column;  background: #fff;  }
+.cart-card { display: flex; width: 100%; flex-direction: column; background: #fff; }
 .cart-content { width: min(100% - 40px, 1060px); margin: auto; padding: 72px 0 90px; }
 .cart-heading { max-width: 580px; }
 .cart-eyebrow { margin: 0 0 17px; color: var(--color-accent-hover); font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
@@ -171,21 +398,21 @@ async function submitOrder() {
 .cart-button:hover { filter: brightness(1.08); }
 .cart-summary { align-self: start; padding: 28px; border-radius: var(--radius); background: #f7f6f4; }
 .summary-topline, .summary-row, .shipping-note { color: var(--color-secondary); font-size: 11px; margin: 10px 0 0; }
-.summary-total { display: flex; align-items: center; justify-content: space-between; }
-.summary-topline { gap: 12px; flex-wrap: wrap; padding-bottom: 22px; border-bottom: 1px solid #e4e2df; color: var(--color-text); font-size: 16px; font-weight: 600; }
+.summary-topline { display: flex; gap: 12px; flex-wrap: wrap; padding-bottom: 22px; border-bottom: 1px solid #e4e2df; color: var(--color-text); font-size: 16px; font-weight: 600; }
 .summary-count, .summary-muted { color: #858585; font-size: 12px; font-weight: 400; }
-.summary-row { gap: 12px; padding: 20px 0 0; color: #4e555a; font-size: 14px; }
+.summary-row { display: flex; justify-content: space-between; gap: 12px; padding: 20px 0 0; color: #4e555a; font-size: 14px; }
 .summary-row strong { text-align: right; color: var(--color-text); font-weight: 600; }
 .summary-muted { align-items: flex-start; gap: 18px; line-height: 1.4; text-align: right; }
 .shipping-note { color: var(--color-secondary); font-size: 11px; margin: 10px 0 0; }
-.summary-total { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e4e2df; color: var(--color-text); font-size: 16px; font-weight: 600; }
+.summary-total { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; padding-top: 20px; border-top: 1px solid #e4e2df; color: var(--color-text); font-size: 16px; font-weight: 600; }
 .summary-total strong { font-size: 20px; }
 .checkout-button { width: 100%; margin-top: 26px; padding: 16px; background: var(--color-accent-hover); color: #fff; cursor: pointer; }
+.checkout-button:disabled { opacity: .6; cursor: not-allowed; }
 .checkout-form { display: grid; gap: 12px; margin-top: 18px; }
 .checkout-form label { display: grid; gap: 6px; font-size: 12px; }
 .checkout-form input { min-height: 42px; padding: 9px 11px; font-size: 13px; }
 .checkout-form .checkout-button { margin-top: 2px; }
-.checkout-feedback { margin: 12px 0 0; color: var(--color-secondary); font-size: 12px; line-height: 1.5; }
+.checkout-feedback { margin: 12px 0 0; color: var(--color-secondary); font-size: 12px; line-height: 1.5; white-space: pre-line; }
 .checkout-feedback--error { color: #b42318; }
 
 @media (max-width: 760px) {

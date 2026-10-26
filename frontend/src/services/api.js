@@ -1,3 +1,5 @@
+import { getAccessToken, clearAuth } from './auth.js'
+
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
 export const isDemoMode = import.meta.env.VITE_API_MODE !== 'api'
@@ -5,11 +7,16 @@ export const isDemoMode = import.meta.env.VITE_API_MODE !== 'api'
 export async function apiRequest(path, { method = 'GET', body, signal } = {}) {
   let response
   try {
+    const headers = {}
+    if (body) headers['Content-Type'] = 'application/json'
+    const accessToken = getAccessToken()
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`
+
     response = await fetch(`${API_BASE_URL}${path}`, {
       method,
       signal,
       credentials: 'include',
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      headers: Object.keys(headers).length ? headers : undefined,
       body: body ? JSON.stringify(body) : undefined,
     })
   } catch {
@@ -18,6 +25,9 @@ export async function apiRequest(path, { method = 'GET', body, signal } = {}) {
 
   const payload = await response.json().catch(() => ({}))
   if (!response.ok) {
+    if (response.status === 401 && path !== '/api/auth/login' && path !== '/api/auth/register') {
+      clearAuth()
+    }
     throw new Error(payload.error || 'Pieprasījumu neizdevās izpildīt. Mēģini vēlreiz.')
   }
   return payload
@@ -36,7 +46,9 @@ export function registerAccount(details) {
 }
 
 export function signOut() {
-  return apiRequest('/api/auth/logout', { method: 'POST' })
+  // The current backend has no logout endpoint; clear the client-side bearer session.
+  clearAuth()
+  return Promise.resolve({ message: 'Pierakstīšanās pārtraukta.' })
 }
 
 export function createOrder(order) {
