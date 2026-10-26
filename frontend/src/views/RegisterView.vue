@@ -25,6 +25,8 @@ async function submit() {
     loading.value = false
   }
 }
+console.log('Demo mode:', isDemoMode)
+console.log('API mode:', import.meta.env.VITE_API_MODE)
 </script>
 <template>
   <main class="auth-shell">
