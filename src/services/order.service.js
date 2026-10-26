@@ -171,4 +171,81 @@ async function getOrder(orderId, user) {
   return formatOrder(data);
 }
 
-module.exports = { createOrder, listOrders, getOrder };
+// Allowed status changes (a shipped order can no longer be cancelled, delivered/cancelled are final)
+const STATUS_TRANSITIONS = {
+  pending: ['confirmed', 'cancelled'],
+  confirmed: ['shipped', 'cancelled'],
+  shipped: ['delivered'],
+  delivered: [],
+  cancelled: [],
+};
+
+// Admin: all orders (optionally one status), newest first, with paging
+async function listAllOrders({ status, page = 1, limit = 20 } = {}) {
+  const withStatus = (query) => (status ? query.eq('status', status) : query);
+
+  const from = (page - 1) * limit;
+  let { data, count, error } = await withStatus(
+    supabaseAdmin
+      .from('orders')
+      .select('id, user_id, status, created_at, full_name, total, order_items(quantity)', { count: 'exact' }),
+  )
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .range(from, from + limit - 1);
+
+  // A page past the end: PostgREST answers with an error, we answer with an empty page
+  if (error?.code === 'PGRST103') {
+    const result = await withStatus(supabaseAdmin.from('orders').select('id', { count: 'exact', head: true }));
+    if (result.error) throw dbError(result.error);
+    data = [];
+    count = result.count;
+    error = null;
+  }
+  if (error) throw dbError(error);
+
+  return {
+    items: data.map((row) => ({
+      id: row.id,
+      userId: row.user_id,
+      status: row.status,
+      createdAt: row.created_at,
+      customerName: row.full_name,
+      itemCount: row.order_items.reduce((sum, item) => sum + item.quantity, 0),
+      total: Number(row.total),
+    })),
+    total: count,
+    page,
+    limit,
+    totalPages: Math.ceil(count / limit),
+  };
+}
+
+// Admin: move an order to its next status
+async function updateOrderStatus(orderId, nextStatus, admin) {
+  const { data: current, error } = await supabaseAdmin
+    .from('orders')
+    .select('status')
+    .eq('id', orderId)
+    .maybeSingle();
+  if (error) throw dbError(error);
+  if (!current) throw httpError(404, 'Order not found');
+
+  if (!STATUS_TRANSITIONS[current.status].includes(nextStatus)) {
+    throw httpError(409, `Cannot change an order from ${current.status} to ${nextStatus}`);
+  }
+
+  // Only update if nobody else changed the status in the meantime
+  const { data: updated, error: updateError } = await supabaseAdmin
+    .from('orders')
+    .update({ status: nextStatus })
+    .eq('id', orderId)
+    .eq('status', current.status)
+    .select('id');
+  if (updateError) throw dbError(updateError);
+  if (updated.length === 0) throw httpError(409, 'The order was changed by someone else, please try again');
+
+  return getOrder(orderId, admin);
+}
+
+module.exports = { createOrder, listOrders, getOrder, listAllOrders, updateOrderStatus };
