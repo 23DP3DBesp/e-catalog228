@@ -2,15 +2,28 @@
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { Heart, ShoppingBag } from '@lucide/vue'
 import ProductCard from '../components/catalog/ProductCard.vue'
-import { products } from '../data/products'
+import { getCatalogProducts } from '../services/catalog'
 import { getFavorites } from '../stores/selection'
-import { addToCart } from '../stores/cart'
+import { addProductWithBestOffer } from '../services/cartactions'
 
+const products = ref([])
 const ids = ref(getFavorites())
-const favorites = computed(() => products.filter(product => ids.value.includes(product.id)))
+const message = ref('')
+const favorites = computed(() => products.value.filter(product => ids.value.includes(product.id)))
 function refresh() { ids.value = getFavorites() }
-function addProduct(product) { if (product.available) addToCart(product) }
-onMounted(() => window.addEventListener('ecatalog:selection-updated', refresh))
+async function addProduct(product) {
+  if (!product.available) return
+  try {
+    const result = await addProductWithBestOffer(product)
+    message.value = result.ok ? `${product.brand} ${product.model} pievienota grozam (${result.offer.merchant}).` : 'Šai riepai šobrīd nav pieejamu piedāvājumu, ko var pasūtīt.'
+  } catch {
+    message.value = 'Neizdevās pievienot grozam. Pārbaudi savienojumu un mēģini vēlreiz.'
+  }
+}
+onMounted(async () => {
+  window.addEventListener('ecatalog:selection-updated', refresh)
+  try { products.value = await getCatalogProducts() } catch { message.value = 'Neizdevās ielādēt riepas. Pārbaudi savienojumu un mēģini vēlreiz.' }
+})
 onBeforeUnmount(() => window.removeEventListener('ecatalog:selection-updated', refresh))
 </script>
 
@@ -18,6 +31,7 @@ onBeforeUnmount(() => window.removeEventListener('ecatalog:selection-updated', r
   <main class="container selection-page">
     <nav class="breadcrumbs" aria-label="Atrašanās vieta"><RouterLink to="/">Sākums</RouterLink><span aria-hidden="true">/</span><span>Izlase</span></nav>
     <header class="selection-heading"><div><p class="section-kicker">Saglabātās riepas</p><h1>Izlase</h1><p>Riepas, kuras vēlies apskatīt vēlāk.</p></div><RouterLink class="text-link" to="/catalog">Atvērt katalogu <span aria-hidden="true">→</span></RouterLink></header>
+    <p v-if="message" role="status" style="margin:0 0 16px;font-size:13px">{{ message }}</p>
     <section v-if="favorites.length" class="product-grid" aria-label="Izlases riepas">
       <ProductCard v-for="product in favorites" :key="product.id" :product="product" @add="addProduct" />
     </section>

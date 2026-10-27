@@ -19,6 +19,7 @@ function saveCart(cart) {
 }
 export function getCart() { return readStoredCart() }
 export function clearCart() { saveCart([]); return [] }
+export function replaceCart(cart) { saveCart(cart); return cart }
 export function addToCart(product) {
   if (!isAuthenticated.value) return null
   const cart = readStoredCart()

@@ -28,7 +28,9 @@ export async function apiRequest(path, { method = 'GET', body, signal } = {}) {
     if (response.status === 401 && path !== '/api/auth/login' && path !== '/api/auth/register') {
       clearAuth()
     }
-    throw new Error(payload.error || 'Pieprasījumu neizdevās izpildīt. Mēģini vēlreiz.')
+    // Validation errors list what is wrong in `details`; show those instead of just "Validation failed"
+    const details = Array.isArray(payload.details) ? payload.details.map(item => item.message).filter(Boolean) : []
+    throw new Error(details.length ? details.join('\n') : payload.error || 'Pieprasījumu neizdevās izpildīt. Mēģini vēlreiz.')
   }
   return payload
 }

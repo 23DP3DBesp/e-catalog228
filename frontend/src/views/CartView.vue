@@ -1,4 +1,3 @@
-
 <template>
     <main class="cart-shell">
         <section class="cart-card" aria-labelledby="cart-title">
@@ -159,17 +158,6 @@
                             </label>
 
                             <label>
-                                E-pasts
-                                <input
-                                    v-model.trim="customer.email"
-                                    name="email"
-                                    type="email"
-                                    autocomplete="email"
-                                    required
-                                />
-                            </label>
-
-                            <label>
                                 Tālrunis
                                 <input
                                     v-model.trim="customer.phone"
@@ -246,7 +234,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { formatPrice } from '../utils/format'
 import {
     clearCart,
@@ -257,6 +245,8 @@ import {
 } from '../stores/cart'
 import { calculateCartTotals } from '../utils/orderTotals'
 import { createOrder, isDemoMode } from '../services/api.js'
+import { repairCart } from '../services/cartActions.js'
+import { hasValidOffer } from '../utils/cartOffers.js'
 
 const cartItems = ref(getCart())
 
@@ -271,11 +261,28 @@ const checkoutError = ref('')
 
 const customer = ref({
     fullName: '',
-    email: '',
     phone: '',
     address: '',
     city: '',
     postalCode: '',
+})
+
+// Cart rows without a valid offer (added before, or from an old cart) get one automatically
+onMounted(async () => {
+    if (isDemoMode || !cartItems.value.length) return
+    try {
+        const result = await repairCart()
+        cartItems.value = result.cart
+        if (result.removed) {
+            checkoutMessage.value = 'Dažas preces tika noņemtas, jo tām šobrīd nav pieejamu piedāvājumu.'
+        } else if (result.repaired) {
+            checkoutMessage.value = 'Dažām precēm tika automātiski izvēlēts piedāvājums, lai pasūtījumu varētu noformēt.'
+        } else if (result.failed) {
+            checkoutMessage.value = 'Neizdevās atjaunināt dažas preces. Mēģini vēlreiz vēlāk.'
+        }
+    } catch {
+        // the cart stays as it is; checkout will explain what is missing
+    }
 })
 
 function changeQuantity(productId, quantity) {
@@ -302,14 +309,11 @@ async function submitOrder() {
     }
 
     // Every order item must reference a real offer from the database.
-    const hasInvalidOffer = cartItems.value.some((item) => {
-        const offerId = Number(item.offerId)
-        return !Number.isInteger(offerId) || offerId <= 0
-    })
+    const hasInvalidOffer = cartItems.value.some(item => !hasValidOffer(item))
 
     if (hasInvalidOffer) {
         checkoutError.value =
-            'Kādam produktam trūkst derīga piedāvājuma. Noņem šo preci no groza un pievieno to vēlreiz no kataloga.'
+            'Kādam produktam trūkst derīga piedāvājuma. Atver preces lapu, izvēlies piedāvājumu un pievieno preci vēlreiz.'
         return
     }
 
@@ -330,16 +334,15 @@ async function submitOrder() {
             })),
         })
 
-        checkoutMessage.value =
-            result.message ||
-            `Pasūtījums ${result.orderId ? `#${result.orderId} ` : ''}ir nosūtīts.`
+        checkoutMessage.value = result.id
+            ? `Pasūtījums #${result.id} ir nosūtīts. Tā statusu vari redzēt savā profilā.`
+            : 'Pasūtījums ir nosūtīts.'
 
         cartItems.value = clearCart()
         checkoutOpen.value = false
 
         customer.value = {
             fullName: '',
-            email: '',
             phone: '',
             address: '',
             city: '',

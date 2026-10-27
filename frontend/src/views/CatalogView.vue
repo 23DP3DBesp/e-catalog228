@@ -9,7 +9,7 @@ import UiSkeleton from '../components/ui/UiSkeleton.vue'
 import { getCatalogProducts } from '../services/catalog'
 import { readFilters, writeFilters, filterProducts, activeFilters, defaults } from '../utils/catalogFilters'
 import { compatibilityNotice } from '../data/vehicles'
-import { addToCart } from '../stores/cart'
+import { addProductWithBestOffer } from '../services/cartActions'
 
 const route = useRoute()
 const router = useRouter()
@@ -59,14 +59,20 @@ function afterClose() {
   document.body.classList.remove('catalog-filters-open')
   filterToggle.value?.focus()
 }
-function addProduct(product) {
+async function addProduct(product) {
   if (!product.available) return
   try {
-    addToCart(product)
-    addedId.value = product.id
-    feedback.value = `${product.brand} ${product.model} pievienota grozam.`
+    const result = await addProductWithBestOffer(product)
+    if (result.ok) {
+      addedId.value = product.id
+      feedback.value = `${product.brand} ${product.model} pievienota grozam (${result.offer.merchant}).`
+    } else if (result.reason === 'no-offer') {
+      feedback.value = 'Šai riepai šobrīd nav pieejamu piedāvājumu, ko var pasūtīt.'
+    } else {
+      router.push({ name: 'login', query: { redirect: '/catalog' } })
+    }
   } catch {
-    feedback.value = 'Neizdevās saglabāt grozu. Pārbaudiet pārlūka krātuves iestatījumus un mēģiniet vēlreiz.'
+    feedback.value = 'Neizdevās pievienot grozam. Pārbaudi savienojumu un mēģini vēlreiz.'
   }
   clearTimeout(feedbackTimer)
   feedbackTimer = setTimeout(() => { feedback.value = ''; addedId.value = null }, 4000)
