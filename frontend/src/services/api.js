@@ -54,3 +54,8 @@ export function signOut() {
 export function createOrder(order) {
   return apiRequest('/api/orders', { method: 'POST', body: order })
 }
+
+export function getProfile() { return apiRequest('/api/profile') }
+export function updateProfile(profile) { return apiRequest('/api/profile', { method: 'PATCH', body: profile }) }
+export function getOrders() { return apiRequest('/api/orders') }
+export function getOrder(id) { return apiRequest(`/api/orders/${encodeURIComponent(id)}`) }

@@ -1,8 +1,11 @@
+import { isAuthenticated, user } from '../services/auth.js'
+
 const CART_STORAGE_KEY = 'ecatalog-cart'
+function storageKey() { return `${CART_STORAGE_KEY}:${user.value?.id || 'guest'}` }
 
 function readStoredCart() {
   try {
-    const storedCart = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]')
+    const storedCart = JSON.parse(localStorage.getItem(storageKey()) || '[]')
     return Array.isArray(storedCart) ? storedCart.filter(item => item && Number.isFinite(Number(item.id)) && Number.isFinite(Number(item.price)) && Number(item.quantity) > 0).map(item => ({ ...item, quantity: Number(item.quantity), price: Number(item.price) })) : []
   } catch {
     return []
@@ -10,13 +13,14 @@ function readStoredCart() {
 }
 function productKey(item) { return item.cartKey || `${item.id}:${item.offerId || 'default'}` }
 function saveCart(cart) {
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
+  localStorage.setItem(storageKey(), JSON.stringify(cart))
   localStorage.setItem('cartCount', String(cart.reduce((total, item) => total + item.quantity, 0)))
   window.dispatchEvent(new Event('ecatalog:cart-updated'))
 }
 export function getCart() { return readStoredCart() }
 export function clearCart() { saveCart([]); return [] }
 export function addToCart(product) {
+  if (!isAuthenticated.value) return null
   const cart = readStoredCart()
   const incoming = { ...product, cartKey: product.cartKey || `${product.id}:${product.offerId || 'default'}` }
   const existingItem = cart.find(item => productKey(item) === incoming.cartKey)

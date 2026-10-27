@@ -1,10 +1,12 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { setAuth } from '../services/auth.js'
 import UiButton from '../components/ui/UiButton.vue'
 import { isDemoMode, registerAccount } from '../services/api.js'
 const router = useRouter()
+const route = useRoute()
 const name = ref('')
 const email = ref('')
 const password = ref('')
@@ -23,7 +25,7 @@ async function submit() {
     const result = await registerAccount({ displayName: name.value, email: email.value, password: password.value })
     setAuth(result)
     message.value = 'Konts veiksmīgi izveidots! Tiek atvērts katalogs.'
-    await router.push('/catalog')
+    await router.push(typeof route.query.redirect === 'string' ? route.query.redirect : '/profile')
   } catch (cause) {
     error.value = cause.message
   } finally {

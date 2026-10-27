@@ -5,7 +5,11 @@ import { formatPrice } from '../../utils/format'
 import { RouterLink } from 'vue-router'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { hasFavorite, hasCompared, toggleFavorite, toggleCompared } from '../../stores/selection'
-defineEmits(['add'])
+import { useAuth } from '../../services/auth.js'
+import { useRouter } from 'vue-router'
+const emit = defineEmits(['add'])
+const router = useRouter()
+const { isAuthenticated } = useAuth()
 const imageBase = import.meta.env.BASE_URL
 const props = defineProps({ product: { type: Object, required: true }, added: Boolean, list: Boolean })
 const favorite = ref(hasFavorite(props.product.id))
@@ -16,22 +20,30 @@ function refreshSelection() {
   compared.value = hasCompared(props.product.id)
 }
 function changeFavorite() {
+  if (!isAuthenticated.value) { router.push({ name: 'login', query: { redirect: '/favorites' } }); return }
   favorite.value = toggleFavorite(props.product.id)
   notice.value = favorite.value ? 'Pievienota izlasei.' : 'Noņemta no izlases.'
 }
 function changeCompare() {
+  if (!isAuthenticated.value) { router.push({ name: 'login', query: { redirect: '/compare' } }); return }
   const result = toggleCompared(props.product.id)
   compared.value = hasCompared(props.product.id)
   notice.value = result.full ? 'Salīdzinājumā var pievienot līdz 4 riepām.' : compared.value ? 'Pievienota salīdzināšanai.' : 'Noņemta no salīdzinājuma.'
 }
+function addProduct() {
+  if (!isAuthenticated.value) { router.push({ name: 'login', query: { redirect: '/cart' } }); return }
+  emit('add', props.product)
+}
 onMounted(() => window.addEventListener('ecatalog:selection-updated', refreshSelection))
+onMounted(() => window.addEventListener('ecatalog:auth-updated', refreshSelection))
 onBeforeUnmount(() => window.removeEventListener('ecatalog:selection-updated', refreshSelection))
+onBeforeUnmount(() => window.removeEventListener('ecatalog:auth-updated', refreshSelection))
 </script>
 <template>
   <article class="tire-card" :class="{'is-list': list}">
     <div class="tire-visual"><span class="season-badge">{{ product.seasonLabel }}</span><div class="card-actions"><button type="button" :aria-label="favorite ? 'Noņemt no izlases' : 'Pievienot izlasei'" :aria-pressed="favorite" @click="changeFavorite"><Heart :size="18" aria-hidden="true" /></button><button type="button" :aria-label="compared ? 'Noņemt no salīdzinājuma' : 'Pievienot salīdzināšanai'" :aria-pressed="compared" @click="changeCompare"><Scale :size="18" aria-hidden="true" /></button></div><img :src="`${imageBase}${product.image}`" alt="" width="1254" height="1254" loading="lazy" /><span class="illustration-note">Ilustratīvs attēls</span></div>
     <div class="tire-body"><p class="tire-brand">{{ product.brand }}</p><RouterLink class="product-title-link" :to="`/product/${product.id}`"><h2>{{ product.model }}<ArrowUpRight :size="16" aria-hidden="true" /></h2></RouterLink><p class="tire-size">{{ product.size }} <span>· {{ product.loadIndex }}{{ product.speedIndex }}</span></p><div class="label-values" aria-label="Marķējuma vērtību piemēri"><span :aria-label="`Degvielas efektivitāte: ${product.fuel || 'nav datu'}`"><Fuel :size="15" aria-hidden="true" />{{ product.fuel || '—' }}</span><span :aria-label="`Saķere uz slapja ceļa: ${product.wet || 'nav datu'}`"><Droplets :size="15" aria-hidden="true" />{{ product.wet || '—' }}</span><span :aria-label="`Ārējais troksnis: ${product.noise == null ? 'nav datu' : product.noise + ' dB'}`"><Volume2 :size="15" aria-hidden="true" />{{ product.noise == null ? '—' : product.noise + ' dB' }}</span></div></div>
-    <div class="tire-purchase"><div class="price-line"><div><small>Piemēra cena / gab.</small><strong>{{ formatPrice(product.price) }}</strong></div><span class="stock-label" :class="{available: product.available}">{{ product.available ? 'Pieejama' : 'Nav pieejama' }}</span></div><UiButton variant="secondary" :disabled="!product.available" @click="$emit('add',product)"><ShoppingBag :size="16" aria-hidden="true" />{{ added ? 'Pievienots grozam' : 'Pievienot grozam' }}</UiButton><span class="visually-hidden" aria-live="polite">{{ notice }}</span></div>
+    <div class="tire-purchase"><div class="price-line"><div><small>Piemēra cena / gab.</small><strong>{{ formatPrice(product.price) }}</strong></div><span class="stock-label" :class="{available: product.available}">{{ product.available ? 'Pieejama' : 'Nav pieejama' }}</span></div><UiButton variant="secondary" :disabled="!product.available" @click="addProduct"><ShoppingBag :size="16" aria-hidden="true" />{{ added ? 'Pievienots grozam' : 'Pievienot grozam' }}</UiButton><span class="visually-hidden" aria-live="polite">{{ notice }}</span></div>
   </article>
 </template>
 <style scoped>

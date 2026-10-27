@@ -8,10 +8,12 @@ import { getProductOffers } from '../services/offers'
 import { calculateOfferTotal } from '../utils/orderTotals'
 import { formatPrice } from '../utils/format'
 import { addToCart } from '../stores/cart'
+import { useAuth } from '../services/auth.js'
 
 const imageBase = import.meta.env.BASE_URL
 const route = useRoute()
 const router = useRouter()
+const { isAuthenticated } = useAuth()
 const product = ref(null)
 const offers = ref([])
 const loading = ref(true)
@@ -45,6 +47,7 @@ async function load() {
 watch(() => route.params.id, load)
 function selectOffer(offer) { selectedOfferId.value = offer.id }
 function addSelectedOffer() {
+  if (!isAuthenticated.value) { router.push({ name: 'login', query: { redirect: '/cart' } }); return }
   const offer = selectedOffer.value
   if (!product.value || !offer) return
   try {

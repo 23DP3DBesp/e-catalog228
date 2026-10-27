@@ -14,7 +14,6 @@ const registerRules = [
     .isLength({ min: 8, max: 72 })
     .withMessage('Password must be 8-72 characters long'),
   body('displayName')
-    .optional()
     .isString()
     .trim()
     .isLength({ min: 2, max: 50 })

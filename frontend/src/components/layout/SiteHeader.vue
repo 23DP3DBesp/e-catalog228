@@ -67,7 +67,8 @@ onBeforeUnmount(() => {
         <RouterLink class="icon-button selection-access" to="/compare" :aria-label="`Salīdzinājums. Riepu skaits: ${compareCount}`"><Scale :size="20" aria-hidden="true" /><span v-if="compareCount" class="cart-badge">{{ compareCount }}</span></RouterLink>
         <RouterLink v-if="!isAuthenticated" class="icon-button account-link" to="/login" aria-label="Pierakstīties" title="Pierakstīties"><UserRound :size="21" aria-hidden="true" /></RouterLink>
         <div v-else class="signed-in-actions" :title="user?.email || 'Pierakstījies'">
-          <span class="signed-in-name">{{ user?.displayName || user?.email }}</span>
+          <RouterLink class="signed-in-name" to="/profile">{{ user?.displayName || user?.email }}</RouterLink>
+          <RouterLink class="icon-button account-link" to="/profile" aria-label="Mans profils" title="Mans profils"><UserRound :size="20" aria-hidden="true" /></RouterLink>
           <button class="icon-button logout-button" type="button" aria-label="Izrakstīties" title="Izrakstīties" @click="logOut"><LogOut :size="20" aria-hidden="true" /></button>
         </div>
         <RouterLink class="icon-button cart-access" to="/cart" :aria-label="`Grozs. Riepu skaits: ${count}`">
@@ -85,7 +86,7 @@ onBeforeUnmount(() => {
         <RouterLink to="/cart" @click="closeMenu">Grozs <span>{{ count }}</span></RouterLink>
         <RouterLink v-if="!isAuthenticated" to="/login" @click="closeMenu">Pierakstīties<UserRound :size="20" aria-hidden="true" /></RouterLink>
         <div v-else class="drawer-auth-row">
-          <span>{{ user?.displayName || user?.email }}</span>
+          <RouterLink to="/profile" @click="closeMenu">Mans profils · {{ user?.displayName || user?.email }}</RouterLink>
           <button class="ui-button ui-button--secondary" type="button" @click="logOut"><LogOut :size="18" aria-hidden="true" /> Izrakstīties</button>
         </div>
       </nav>

@@ -6,10 +6,14 @@ import UiButton from '../components/ui/UiButton.vue'
 import { products } from '../data/products'
 import { vehicles } from '../data/vehicles'
 import { addToCart } from '../stores/cart'
+import { useRouter } from 'vue-router'
+import { useAuth } from '../services/auth.js'
 import { parseSize } from '../utils/catalogSearch'
 import { formatPrice } from '../utils/format'
 
 const STORAGE_KEY = 'ecatalog-tire-finder'
+const router = useRouter()
+const { isAuthenticated } = useAuth()
 const steps = ['Auto un izmērs', 'Sezona un cena', 'Braukšana', 'Rezultāts']
 const seasons = [
   { value: 'summer', label: 'Vasaras riepas' },
@@ -115,6 +119,7 @@ function startOver() {
 }
 function addProduct(product) {
   if (!product.available) return
+  if (!isAuthenticated.value) { router.push({ name: 'login', query: { redirect: '/cart' } }); return }
   addToCart(product)
   feedback.value = `${product.brand} ${product.model} pievienota grozam.`
 }

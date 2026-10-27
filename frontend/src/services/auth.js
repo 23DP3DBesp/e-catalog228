@@ -25,9 +25,10 @@ const initialAuth = typeof window !== 'undefined'
   ? readStoredAuth()
   : { user: null, session: null }
 
-const user = ref(initialAuth.user)
+export const user = ref(initialAuth.user)
 const session = ref(initialAuth.session)
 const isAuthenticated = computed(() => Boolean(user.value && session.value?.accessToken))
+export { isAuthenticated }
 
 export function getAccessToken() {
   if (!session.value?.accessToken) return null
@@ -69,6 +70,14 @@ export function clearAuth() {
   session.value = null
   if (typeof window !== 'undefined') {
     localStorage.removeItem(STORAGE_KEY)
+    window.dispatchEvent(new CustomEvent('ecatalog:auth-updated'))
+  }
+}
+
+export function updateAuthUser(patch) {
+  user.value = { ...user.value, ...patch }
+  if (typeof window !== 'undefined' && session.value) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ user: user.value, session: session.value }))
     window.dispatchEvent(new CustomEvent('ecatalog:auth-updated'))
   }
 }

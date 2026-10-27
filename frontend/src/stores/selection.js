@@ -1,10 +1,12 @@
+import { user } from '../services/auth.js'
+
 const FAVORITES_KEY = 'ecatalog-favorites'
 const COMPARE_KEY = 'ecatalog-compare'
 const MAX_COMPARE_ITEMS = 4
 
 function readIds(key) {
   try {
-    const ids = JSON.parse(localStorage.getItem(key) || '[]')
+    const ids = JSON.parse(localStorage.getItem(`${key}:${user.value?.id || 'guest'}`) || '[]')
     return Array.isArray(ids) ? [...new Set(ids.map(Number).filter(Number.isFinite))] : []
   } catch {
     return []
@@ -12,7 +14,7 @@ function readIds(key) {
 }
 
 function saveIds(key, ids) {
-  localStorage.setItem(key, JSON.stringify(ids))
+  localStorage.setItem(`${key}:${user.value?.id || 'guest'}`, JSON.stringify(ids))
   window.dispatchEvent(new Event('ecatalog:selection-updated'))
 }
 

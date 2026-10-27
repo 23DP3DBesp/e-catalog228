@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { isAuthenticated } from '../services/auth.js'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,17 +27,26 @@ const router = createRouter({
     {
       path: '/cart',
       name: 'cart',
+      meta: { requiresAuth: true },
       component: () => import('../views/CartView.vue'),
     },
     {
       path: '/favorites',
       name: 'favorites',
+      meta: { requiresAuth: true },
       component: () => import('../views/FavoritesView.vue'),
     },
     {
       path: '/compare',
       name: 'compare',
+      meta: { requiresAuth: true },
       component: () => import('../views/CompareView.vue'),
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      meta: { requiresAuth: true },
+      component: () => import('../views/ProfileView.vue'),
     },
     {
       path: '/product/:id',
@@ -59,6 +69,13 @@ const router = createRouter({
       component: () => import('../views/AboutView.vue'),
     },
   ],
+})
+
+router.beforeEach((to) => {
+  if (to.meta.requiresAuth && !isAuthenticated.value) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+  if ((to.name === 'login' || to.name === 'register') && isAuthenticated.value) return { name: 'profile' }
 })
 
 export default router
