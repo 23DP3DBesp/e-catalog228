@@ -1,14 +1,14 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Menu, X, ShoppingBag, UserRound, CircleDot, ArrowUpRight, Heart, Scale, LogOut } from '@lucide/vue'
+import { Menu, X, ShoppingBag, UserRound, CircleDot, ArrowUpRight, Heart, Scale, LogOut, ShieldCheck } from '@lucide/vue'
 import { getCartCount } from '../../stores/cart'
 import { getFavorites, getCompared } from '../../stores/selection'
 import { clearAuth, useAuth } from '../../services/auth.js'
 
 const route = useRoute()
 const router = useRouter()
-const { user, isAuthenticated } = useAuth()
+const { user, isAuthenticated, isAdmin } = useAuth()
 const drawer = ref(null)
 const toggle = ref(null)
 const isOpen = ref(false)
@@ -68,6 +68,7 @@ onBeforeUnmount(() => {
         <RouterLink v-if="!isAuthenticated" class="icon-button account-link" to="/login" aria-label="Pierakstīties" title="Pierakstīties"><UserRound :size="21" aria-hidden="true" /></RouterLink>
         <div v-else class="signed-in-actions" :title="user?.email || 'Pierakstījies'">
           <RouterLink class="signed-in-name" to="/profile">{{ user?.displayName || user?.email }}</RouterLink>
+          <RouterLink v-if="isAdmin" class="icon-button account-link" to="/admin" aria-label="Administrēšana" title="Administrēšana"><ShieldCheck :size="20" aria-hidden="true" /></RouterLink>
           <RouterLink class="icon-button account-link" to="/profile" aria-label="Mans profils" title="Mans profils"><UserRound :size="20" aria-hidden="true" /></RouterLink>
           <button class="icon-button logout-button" type="button" aria-label="Izrakstīties" title="Izrakstīties" @click="logOut"><LogOut :size="20" aria-hidden="true" /></button>
         </div>
@@ -86,6 +87,7 @@ onBeforeUnmount(() => {
         <RouterLink to="/cart" @click="closeMenu">Grozs <span>{{ count }}</span></RouterLink>
         <RouterLink v-if="!isAuthenticated" to="/login" @click="closeMenu">Pierakstīties<UserRound :size="20" aria-hidden="true" /></RouterLink>
         <div v-else class="drawer-auth-row">
+          <RouterLink v-if="isAdmin" to="/admin" @click="closeMenu">Administrēšana</RouterLink>
           <RouterLink to="/profile" @click="closeMenu">Mans profils · {{ user?.displayName || user?.email }}</RouterLink>
           <button class="ui-button ui-button--secondary" type="button" @click="logOut"><LogOut :size="18" aria-hidden="true" /> Izrakstīties</button>
         </div>

@@ -15,6 +15,11 @@ const listOrdersRules = [
   single('limit').isInt({ min: 1, max: 100 }).toInt(),
 ];
 
+const listUsersRules = [
+  single('page').isInt({ min: 1 }).toInt(),
+  single('limit').isInt({ min: 1, max: 100 }).toInt(),
+];
+
 const updateOrderStatusRules = [
   param('id').isInt({ min: 1 }).withMessage('id must be a positive integer').toInt(),
   body('status')
@@ -25,4 +30,4 @@ const updateOrderStatusRules = [
     .withMessage(`status must be one of: ${STATUSES.join(', ')}`),
 ];
 
-module.exports = { listOrdersRules, updateOrderStatusRules };
+module.exports = { listOrdersRules, listUsersRules, updateOrderStatusRules };

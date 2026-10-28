@@ -11,6 +11,7 @@ function formatUser(user) {
     id: user.id,
     email: user.email,
     displayName: user.user_metadata?.display_name ?? null,
+    role: user.app_metadata?.role === 'admin' ? 'admin' : 'user',
     createdAt: user.created_at,
   };
 }

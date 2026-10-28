@@ -28,7 +28,9 @@ const initialAuth = typeof window !== 'undefined'
 export const user = ref(initialAuth.user)
 const session = ref(initialAuth.session)
 const isAuthenticated = computed(() => Boolean(user.value && session.value?.accessToken))
-export { isAuthenticated }
+// UI convenience only: the backend checks the admin role on every /api/admin request.
+const isAdmin = computed(() => isAuthenticated.value && user.value?.role === 'admin')
+export { isAuthenticated, isAdmin }
 
 export function getAccessToken() {
   if (!session.value?.accessToken) return null
@@ -83,5 +85,5 @@ export function updateAuthUser(patch) {
 }
 
 export function useAuth() {
-  return { user: computed(() => user.value), isAuthenticated }
+  return { user: computed(() => user.value), isAuthenticated, isAdmin }
 }

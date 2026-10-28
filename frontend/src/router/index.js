@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { isAuthenticated } from '../services/auth.js'
+import { isAuthenticated, isAdmin } from '../services/auth.js'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -64,6 +64,12 @@ const router = createRouter({
       component: () => import('../views/TireFinderView.vue'),
     },
     {
+      path: '/admin',
+      name: 'admin',
+      meta: { requiresAuth: true, requiresAdmin: true },
+      component: () => import('../views/AdminView.vue'),
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue'),
@@ -75,6 +81,7 @@ router.beforeEach((to) => {
   if (to.meta.requiresAuth && !isAuthenticated.value) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
+  if (to.meta.requiresAdmin && !isAdmin.value) return { name: 'home' }
   if ((to.name === 'login' || to.name === 'register') && isAuthenticated.value) return { name: 'profile' }
 })
 
