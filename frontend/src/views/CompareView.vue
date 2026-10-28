@@ -4,7 +4,7 @@ import { Heart, ShoppingBag } from '@lucide/vue'
 import ProductCard from '../components/catalog/ProductCard.vue'
 import { getCatalogProducts } from '../services/catalog'
 import { getFavorites } from '../stores/selection'
-import { addProductWithBestOffer } from '../services/cartActions'
+import { addProductWithBestOffer } from '../services/cartactions'
 
 const products = ref([])
 const ids = ref(getFavorites())

@@ -245,8 +245,8 @@ import {
 } from '../stores/cart'
 import { calculateCartTotals } from '../utils/orderTotals'
 import { createOrder, isDemoMode } from '../services/api.js'
-import { repairCart } from '../services/cartActions.js'
-import { hasValidOffer } from '../utils/cartOffers.js'
+import { repairCart } from '../services/cartactions.js'
+import { hasValidOffer } from '../utils/cartoffers.js'
 
 const cartItems = ref(getCart())
 

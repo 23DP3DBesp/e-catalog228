@@ -9,7 +9,7 @@ import UiSkeleton from '../components/ui/UiSkeleton.vue'
 import { getCatalogProducts } from '../services/catalog'
 import { readFilters, writeFilters, filterProducts, activeFilters, defaults } from '../utils/catalogFilters'
 import { compatibilityNotice } from '../data/vehicles'
-import { addProductWithBestOffer } from '../services/cartActions'
+import { addProductWithBestOffer } from '../services/cartactions'
 
 const route = useRoute()
 const router = useRouter()

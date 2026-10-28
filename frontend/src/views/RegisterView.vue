@@ -39,7 +39,7 @@ async function submit() {
       <p class="hero-eyebrow">Mans konts</p>
       <h1 id="auth-title">Izveidot kontu</h1>
       <form class="auth-form" @submit.prevent="submit">
-        <label><span>Vārds</span><input v-model.trim="name" type="text" name="name" autocomplete="name" maxlength="100" required /></label>
+        <label><span>Vārds</span><input v-model.trim="name" type="text" name="name" autocomplete="name" maxlength="50" minlength="2" required /></label>
         <label><span>E-pasts</span><input v-model.trim="email" type="email" name="email" autocomplete="email" required /></label>
         <label><span>Parole</span><input v-model="password" type="password" name="password" autocomplete="new-password" minlength="8" required /></label>
         <UiButton type="submit" :loading="loading">Izveidot kontu</UiButton>
